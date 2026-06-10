@@ -2,7 +2,10 @@
 
 export { HoloGlobe, latLonToVec3 } from "./canvas/HoloGlobe";
 export type { HoloGlobeProps } from "./canvas/HoloGlobe";
+export { Bezel } from "./chrome/Bezel";
+export type { BezelMark } from "./chrome/Bezel";
 export { Shell } from "./chrome/Shell";
+export { Tape } from "./chrome/Tape";
 export { useFeed } from "./feeds/feed";
 export type { DataFeed, FeedState } from "./feeds/feed";
 export { buildRegistry } from "./registry/registry";

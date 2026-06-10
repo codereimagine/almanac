@@ -14,7 +14,7 @@ import * as THREE from "three";
 import { feature } from "topojson-client";
 import type { GeometryCollection, Topology } from "topojson-specification";
 import land110 from "world-atlas/land-110m.json";
-import { HOLO, HOLO_HI, MAG } from "../tokens";
+import { HOLO, HOLO_HI } from "../tokens";
 
 /** lat/lon (deg) → unit-sphere position (y = north). Use for instrument overlays. */
 export function latLonToVec3(latDeg: number, lonDeg: number, radius = 1): THREE.Vector3 {
@@ -88,32 +88,25 @@ export interface HoloGlobeProps {
 
 export function HoloGlobe({ radius = 1.4, spin = 0.1, accent = HOLO, children, space }: HoloGlobeProps) {
   const grp = useRef<THREE.Group>(null!);
-  const scan = useRef<THREE.Mesh>(null!);
-  const t = useRef(0);
 
   const { lines, dots } = useMemo(() => coastlineGeometry(radius), [radius]);
   const grat = useMemo(() => graticuleGeometry(radius * 0.998), [radius]);
   const equator = useMemo(() => graticuleEquator(radius * 1.002), [radius]);
 
   useFrame((_, dt) => {
-    t.current += dt;
     grp.current.rotation.y += dt * spin;
-    // Halo scan sweep: a latitude band gliding pole-to-pole
-    const phase = (Math.sin(t.current * 0.35) * 0.5 + 0.5) * Math.PI - Math.PI / 2;
-    const y = Math.sin(phase) * radius;
-    const r = Math.max(0.02, Math.cos(phase) * radius);
-    scan.current.position.y = y;
-    scan.current.scale.set(r, r, r);
-    (scan.current.material as THREE.MeshBasicMaterial).opacity =
-      0.25 + 0.15 * Math.sin(t.current * 2.2);
   });
+  // NOTE: no scan/pulse rings — banned by the fused contract. Nothing sweeps the globe.
 
   return (
     <group>
       <group ref={grp}>
-        {/* continents — the hologram's subject */}
+        {/* continents — double pass: additive bloom under crisp linework (contract look) */}
         <lineSegments geometry={lines}>
-          <lineBasicMaterial color={HOLO_HI} transparent opacity={0.85} />
+          <lineBasicMaterial color={HOLO} transparent opacity={0.35} blending={THREE.AdditiveBlending} />
+        </lineSegments>
+        <lineSegments geometry={lines}>
+          <lineBasicMaterial color={HOLO_HI} transparent opacity={0.95} />
         </lineSegments>
         <points geometry={dots}>
           <pointsMaterial color={accent} size={0.016} transparent opacity={0.75} sizeAttenuation />
@@ -147,11 +140,6 @@ export function HoloGlobe({ radius = 1.4, spin = 0.1, accent = HOLO, children, s
           side={THREE.BackSide}
           blending={THREE.AdditiveBlending}
         />
-      </mesh>
-      {/* scan ring lives outside the spin group — the scanner runs HOT (signature magenta) */}
-      <mesh ref={scan} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[1, 0.0045, 6, 90]} />
-        <meshBasicMaterial color={MAG} transparent opacity={0.35} />
       </mesh>
       {space}
     </group>

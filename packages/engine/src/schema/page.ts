@@ -51,6 +51,8 @@ export interface AlmanacPage<T = unknown> {
   content: ReactNode | ComponentType;
   Canvas?: ComponentType<CanvasProps>;
   feed?: DataFeed<T>;
+  /** edge-column telemetry (the fused contract's left/right readouts) */
+  readouts?: { left?: ReactNode | ComponentType; right?: ReactNode | ComponentType };
 }
 
 /** Runtime validation — fail loud at registry-build time, not render time. */
