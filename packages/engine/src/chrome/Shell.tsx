@@ -4,7 +4,7 @@
  * zero router deps: #/ = index, #/page/<id> = an instrument.
  */
 
-import { useEffect, useState, type ComponentType, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ComponentType, type ReactNode } from "react";
 import { useFeed } from "../feeds/feed";
 import type { Registry } from "../registry/registry";
 import type { AlmanacPage } from "../schema/page";
@@ -20,6 +20,42 @@ function useRoute(): string {
   return route;
 }
 
+/** Twinkling starfield — the almanac looks at Earth from space; the stars are context, not décor. */
+function Starfield({ n = 90 }: { n?: number }) {
+  const stars = useMemo(
+    () =>
+      Array.from({ length: n }, (_, i) => ({
+        id: i,
+        left: `${Math.random() * 100}%`,
+        top: `${Math.random() * 100}%`,
+        size: Math.random() < 0.85 ? 1 : 2,
+        tw: `${2 + Math.random() * 4}s`,
+        twd: `${Math.random() * 4}s`,
+      })),
+    [n],
+  );
+  return (
+    <div id="alm-stars">
+      {stars.map((s) => (
+        <span
+          key={s.id}
+          className="star"
+          style={
+            {
+              left: s.left,
+              top: s.top,
+              width: s.size,
+              height: s.size,
+              "--tw": s.tw,
+              "--twd": s.twd,
+            } as React.CSSProperties
+          }
+        />
+      ))}
+    </div>
+  );
+}
+
 function Telemetry({ registry, liveCount }: { registry: Registry; liveCount: number }) {
   const [now, setNow] = useState(new Date());
   useEffect(() => {
@@ -29,7 +65,9 @@ function Telemetry({ registry, liveCount }: { registry: Registry; liveCount: num
   const utc = now.toISOString().slice(11, 19);
   return (
     <div id="alm-telemetry">
-      <span className="brand">ALMANAC</span>
+      <span className="brand">
+        <span className="brand-mark">A</span>ALMANAC
+      </span>
       <span className="seg">
         EARTH SYSTEMS · <b>{registry.pages.length} INSTRUMENTS</b>
       </span>
@@ -134,6 +172,7 @@ export function Shell({ registry }: { registry: Registry }) {
         gap: 12, padding: 14, zIndex: 5,
       }}
     >
+      <Starfield />
       <Telemetry registry={registry} liveCount={liveIds.size} />
       {page ? <PageView key={page.meta.id} page={page} /> : <IndexRack registry={registry} />}
     </div>

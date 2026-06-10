@@ -5,7 +5,8 @@ import type { SystemKind } from "../schema/page";
 export const HOLO = "#6fd3ff";
 export const HOLO_HI = "#d6f3ff";
 export const VOID = "#030911";
-export const SAT = "#9fb4a6";
+export const SAT = "#f0ce96"; // telemetry gold (starnav lineage)
+export const SAT_HI = "#f4dcae";
 export const SAT_AMBER = "#ffb45e";
 
 export const SYSTEM_ACCENT: Record<SystemKind, string> = {

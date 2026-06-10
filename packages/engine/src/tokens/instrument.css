@@ -22,10 +22,12 @@
   --alm-glow-soft: 0 0 14px rgba(111, 211, 255, 0.35);
   --alm-glow: 0 0 10px rgba(111, 211, 255, 0.55), 0 0 34px rgba(111, 211, 255, 0.18);
 
-  /* ── GHOSTS layer (the 20) ──────────────────────────────────────────── */
-  --alm-sat: #9fb4a6;             /* satellite-telemetry neutral */
-  --alm-sat-amber: #ffb45e;       /* caution / calibration accents */
-  --alm-tick: rgba(159, 180, 166, 0.4);
+  /* ── GHOSTS layer (the 20) — gold telemetry (trio lineage: starnav target-gold) */
+  --alm-sat: #f0ce96;             /* satellite-telemetry gold */
+  --alm-sat-hi: #f4dcae;
+  --alm-sat-glow: rgba(240, 206, 150, 0.45);
+  --alm-sat-amber: #ffb45e;
+  --alm-tick: rgba(240, 206, 150, 0.35);
 
   /* ── system accents (one per instrument family) ─────────────────────── */
   --sys-ocean: #38b6ff;
@@ -50,17 +52,22 @@ body {
   font-family: var(--alm-mono);
   letter-spacing: 0.02em;
   overflow: hidden;
-  /* the hologram volume: a soft light column rising from below center */
+  /* layered night (trio lineage: starnav's sky) — deep blue falling from the
+     top, violet haze on the horizon, a faint holo column under the instrument */
   background-image:
-    radial-gradient(ellipse 70% 55% at 50% 110%, rgba(111, 211, 255, 0.10), transparent 60%),
-    radial-gradient(ellipse 45% 35% at 50% 38%, rgba(111, 211, 255, 0.05), transparent 60%),
-    linear-gradient(rgba(111, 211, 255, 0.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(111, 211, 255, 0.025) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 52px 52px, 52px 52px;
+    radial-gradient(150% 70% at 50% 100%, rgba(86, 48, 120, 0.20) 0%, transparent 55%),
+    radial-gradient(120% 95% at 50% 0%, #122657 0%, #0b1740 32%, #070e28 62%, var(--alm-void) 100%),
+    radial-gradient(ellipse 55% 45% at 50% 60%, rgba(111, 211, 255, 0.05), transparent 65%);
+  background-size: 100% 100%, 100% 100%, 100% 100%;
 }
-/* serene vignette — no noise, no scanline grit (that's VIAC's language) */
 body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 60;
-  background: radial-gradient(ellipse at center, transparent 62%, rgba(2, 6, 12, 0.7) 100%); }
+  background: radial-gradient(ellipse at center, transparent 62%, rgba(2, 6, 12, 0.72) 100%); }
+
+/* twinkling starfield layer (engine Shell renders the stars) */
+#alm-stars { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
+#alm-stars .star { position: absolute; background: #c8d0e8; border-radius: 50%;
+  animation: alm-tw var(--tw, 3s) ease-in-out infinite; animation-delay: var(--twd, 0s); }
+@keyframes alm-tw { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.85; } }
 
 /* ── hologram text + panels ──────────────────────────────────────────── */
 .holo { color: var(--alm-holo); text-shadow: var(--alm-glow); }
@@ -95,9 +102,15 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
   background: linear-gradient(90deg, rgba(111, 211, 255, 0.05), transparent);
   font-size: 10px; letter-spacing: 0.16em; padding: 0 12px; overflow: hidden;
 }
-#alm-telemetry .brand { color: var(--alm-holo-hi); font-family: var(--alm-display);
-  font-weight: 700; letter-spacing: 0.34em; padding: 0 16px 0 4px;
+#alm-telemetry .brand { display: flex; align-items: center; gap: 10px;
+  color: var(--alm-holo-hi); font-family: var(--alm-display);
+  font-weight: 700; letter-spacing: 0.34em; padding: 8px 16px 8px 2px;
   border-right: 1px solid var(--alm-line); text-shadow: var(--alm-glow); }
+/* trilogy brand-mark convention: solid accent box + dark letter (U/B/S → A) */
+.brand-mark { width: 24px; height: 24px; border-radius: 5px; background: var(--alm-holo);
+  color: var(--alm-void); display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--alm-display); font-size: 14px; font-weight: 700; letter-spacing: 0;
+  box-shadow: 0 0 14px rgba(111, 211, 255, 0.4); text-shadow: none; flex: 0 0 auto; }
 #alm-telemetry .seg { padding: 0 14px; color: var(--alm-dim); border-right: 1px solid var(--alm-line); }
 #alm-telemetry .seg b { color: var(--alm-sat); font-weight: 500; }
 #alm-telemetry .seg.live b { color: var(--alm-holo); text-shadow: var(--alm-glow-soft); }
@@ -108,9 +121,15 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
   gap: 14px; padding: 4px; }
 .inst-card { position: relative; border: 1px solid var(--alm-line); background: var(--alm-panel);
   padding: 18px 16px 14px; cursor: pointer; transition: 0.22s; overflow: hidden; }
-.inst-card:hover { border-color: var(--accent, var(--alm-holo));
-  box-shadow: 0 0 22px color-mix(in srgb, var(--accent, var(--alm-holo)) 28%, transparent),
-    inset 0 0 28px rgba(111, 211, 255, 0.05); }
+.inst-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 2px;
+  background: var(--accent, var(--alm-holo)); opacity: 0.55;
+  box-shadow: 0 0 12px var(--accent, var(--alm-holo)); }
+.inst-card::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(120% 90% at 0% 0%,
+    color-mix(in srgb, var(--accent, var(--alm-holo)) 9%, transparent), transparent 55%); }
+.inst-card:hover { border-color: var(--accent, var(--alm-holo)); transform: translateY(-2px);
+  box-shadow: 0 0 26px color-mix(in srgb, var(--accent, var(--alm-holo)) 30%, transparent),
+    inset 0 0 30px rgba(111, 211, 255, 0.06); }
 .inst-card .sys { font-size: 9px; letter-spacing: 0.3em; color: var(--accent, var(--alm-holo));
   text-shadow: 0 0 8px currentColor; }
 .inst-card h3 { font-family: var(--alm-display); font-size: 15px; font-weight: 600;
@@ -143,9 +162,13 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
   background: linear-gradient(270deg, rgba(8, 22, 40, 0.5), transparent);
   pointer-events: none; }
 .axis-strip .ax { color: var(--alm-dim); }
-.axis-strip .ax b { display: block; color: var(--alm-holo); font-weight: 500; font-size: 11px;
-  margin-top: 3px; text-shadow: var(--alm-glow-soft); }
-.axis-strip .ax.sat b { color: var(--alm-sat); text-shadow: none; }
+.axis-strip .ax::before { content: "// "; color: var(--alm-holo); }
+.axis-strip .ax b { display: block; font-family: var(--alm-display); font-weight: 300;
+  color: var(--alm-holo-hi); font-size: 17px; letter-spacing: 0.06em; margin-top: 3px;
+  font-variant-numeric: tabular-nums; text-shadow: var(--alm-glow-soft); }
+.axis-strip .ax.sat::before { color: var(--alm-sat); }
+.axis-strip .ax.sat b { color: var(--alm-sat-hi); font-size: 13px;
+  text-shadow: 0 0 10px var(--alm-sat-glow); }
 .axis-strip .spacer { flex: 1; }
 .axis-strip .ruler { height: 56px; background:
   repeating-linear-gradient(180deg, var(--alm-tick) 0 1px, transparent 1px 8px); opacity: 0.6; }

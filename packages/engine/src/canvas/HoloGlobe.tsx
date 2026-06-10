@@ -82,9 +82,11 @@ export interface HoloGlobeProps {
   accent?: string;
   /** overlays rendered INSIDE the rotating group (markers placed via latLonToVec3) */
   children?: ReactNode;
+  /** overlays in WORLD space (non-rotating) — sun-anchored things like the terminator */
+  space?: ReactNode;
 }
 
-export function HoloGlobe({ radius = 1.4, spin = 0.1, accent = HOLO, children }: HoloGlobeProps) {
+export function HoloGlobe({ radius = 1.4, spin = 0.1, accent = HOLO, children, space }: HoloGlobeProps) {
   const grp = useRef<THREE.Group>(null!);
   const scan = useRef<THREE.Mesh>(null!);
   const t = useRef(0);
@@ -135,11 +137,23 @@ export function HoloGlobe({ radius = 1.4, spin = 0.1, accent = HOLO, children }:
         </mesh>
         {children}
       </group>
+      {/* atmosphere rim — additive backside shell reads as a glow halo at the limb */}
+      <mesh>
+        <sphereGeometry args={[radius * 1.06, 48, 32]} />
+        <meshBasicMaterial
+          color={HOLO}
+          transparent
+          opacity={0.06}
+          side={THREE.BackSide}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
       {/* scan ring lives outside the spin group — it sweeps the world */}
       <mesh ref={scan} rotation={[Math.PI / 2, 0, 0]}>
         <torusGeometry args={[1, 0.0045, 6, 90]} />
         <meshBasicMaterial color={HOLO_HI} transparent opacity={0.3} />
       </mesh>
+      {space}
     </group>
   );
 }
