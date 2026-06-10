@@ -1,5 +1,7 @@
 /** @almanac/engine — public API. Sites consume this; pages are plugins. */
 
+export { HoloGlobe, latLonToVec3 } from "./canvas/HoloGlobe";
+export type { HoloGlobeProps } from "./canvas/HoloGlobe";
 export { Shell } from "./chrome/Shell";
 export { useFeed } from "./feeds/feed";
 export type { DataFeed, FeedState } from "./feeds/feed";

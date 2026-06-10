@@ -1,12 +1,12 @@
 // CALIBRATION — the engine's reference instrument (and P1's proof page).
-// Lives entirely in the site: if this renders, the plugin contract works with
-// zero engine edits. Doubles as the design-language showcase: the holographic
-// reference sphere is the 80 (Halo), the frame ticks around it are the 20 (Ghosts).
+// v2: the canvas is the engine's HoloGlobe (real coastlines, graticule, scan
+// sweep) with the obliquity ring composed on top, plus the right axis strip.
+// Still entirely in site/ — the zero-engine-edit plugin gate holds.
 
 import type { AlmanacPage, CanvasProps, DataFeed } from "@almanac/engine";
-import { HOLO, HOLO_HI } from "@almanac/engine";
+import { HOLO, HoloGlobe } from "@almanac/engine";
 import { Canvas as R3F, useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
 interface CalConstants {
@@ -22,46 +22,59 @@ const feed: DataFeed<CalConstants> = {
   snapshot: { earthRadiusKm: 6371.0, obliquityDeg: 23.44, siderealDayH: 23.934, datum: "WGS-84" },
 };
 
-/** Holographic reference sphere — luminous lat/long wireframe, slow serene spin. */
-function ReferenceSphere() {
-  const grp = useRef<THREE.Group>(null!);
+/** Obliquity reference ring at the true 23.44° tilt — engineering as ornament. */
+function ObliquityRing() {
   const ring = useRef<THREE.Mesh>(null!);
   useFrame((_, dt) => {
-    grp.current.rotation.y += dt * 0.12; // serene — no VIAC energy
-    ring.current.rotation.z += dt * 0.04;
+    ring.current.rotation.z += dt * 0.05;
   });
-  // axial reference ring tilted to the obliquity — engineering as ornament
-  const tilt = useMemo(() => (23.44 * Math.PI) / 180, []);
+  const tilt = Math.PI / 2 + (23.44 * Math.PI) / 180;
   return (
-    <group>
-      <group ref={grp}>
-        <mesh>
-          <sphereGeometry args={[1.35, 28, 18]} />
-          <meshBasicMaterial color={HOLO} wireframe transparent opacity={0.3} />
-        </mesh>
-        <mesh>
-          <sphereGeometry args={[1.05, 14, 9]} />
-          <meshBasicMaterial color={HOLO_HI} wireframe transparent opacity={0.1} />
-        </mesh>
-      </group>
-      <mesh ref={ring} rotation={[Math.PI / 2 + tilt, 0, 0]}>
-        <torusGeometry args={[1.85, 0.004, 8, 120]} />
-        <meshBasicMaterial color={HOLO} transparent opacity={0.55} />
-      </mesh>
-    </group>
+    <mesh ref={ring} rotation={[tilt, 0, 0]}>
+      <torusGeometry args={[1.95, 0.0035, 8, 140]} />
+      <meshBasicMaterial color={HOLO} transparent opacity={0.5} />
+    </mesh>
+  );
+}
+
+function AxisStrip() {
+  const [utc, setUtc] = useState("--:--:--");
+  useEffect(() => {
+    const t = setInterval(() => setUtc(new Date().toISOString().slice(11, 19)), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const c = feed.snapshot;
+  return (
+    <div className="axis-strip">
+      <span className="ax">UTC<b>{utc}</b></span>
+      <span className="ax">DATUM<b>{c.datum}</b></span>
+      <div className="ruler" />
+      <span className="ax">RADIUS·EQ<b>{c.earthRadiusKm.toLocaleString()} km</b></span>
+      <span className="ax">OBLIQUITY<b>{c.obliquityDeg}°</b></span>
+      <span className="ax">SIDEREAL<b>{c.siderealDayH} h</b></span>
+      <div className="spacer" />
+      <div className="ruler" />
+      <span className="ax sat">SOURCE<b>LAND-110M</b></span>
+      <span className="ax sat">MODE<b>REFERENCE</b></span>
+    </div>
   );
 }
 
 function CalCanvas(_props: CanvasProps) {
   return (
-    <R3F
-      camera={{ fov: 45, position: [0, 0.4, 4.4] }}
-      dpr={[1, 1.5]}
-      gl={{ antialias: true, alpha: true }}
-      style={{ position: "absolute", inset: 0 }}
-    >
-      <ReferenceSphere />
-    </R3F>
+    <>
+      <R3F
+        camera={{ fov: 45, position: [0, 0.5, 4.6] }}
+        dpr={[1, 1.5]}
+        gl={{ antialias: true, alpha: true }}
+        style={{ position: "absolute", inset: 0 }}
+      >
+        <HoloGlobe radius={1.4} spin={0.1}>
+          <ObliquityRing />
+        </HoloGlobe>
+      </R3F>
+      <AxisStrip />
+    </>
   );
 }
 
@@ -72,8 +85,8 @@ function Content() {
       Reference instrument. Confirms the engine's chrome, canvas and feed seams against known
       constants: equatorial radius <span className="num">{c.earthRadiusKm.toLocaleString()} km</span>,
       axial obliquity <span className="num">{c.obliquityDeg}°</span>, sidereal day{" "}
-      <span className="num">{c.siderealDayH} h</span>, datum <b>{c.datum}</b>. If this page renders,
-      the page contract holds — every instrument after this one is a plugin.
+      <span className="num">{c.siderealDayH} h</span>, datum <b>{c.datum}</b>. Coastlines are real
+      (Natural Earth land-110m) — the same <b>HoloGlobe</b> substrate every globe instrument composes on.
     </>
   );
 }
