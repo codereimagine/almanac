@@ -48,7 +48,8 @@ export interface CanvasProps {
 
 export interface AlmanacPage<T = unknown> {
   meta: PageMeta;
-  content: ReactNode | ComponentType;
+  /** optional prose — NOT rendered on the instrument (contract: no mid-screen text); reserved for index/docs */
+  content?: ReactNode | ComponentType | null;
   Canvas?: ComponentType<CanvasProps>;
   feed?: DataFeed<T>;
   /** edge-column telemetry (the fused contract's left/right readouts) */
@@ -67,6 +68,5 @@ export function validatePage(p: unknown, source: string): AlmanacPage {
   if (!m!.title) fail("meta.title required");
   if (!m!.system) fail("meta.system required");
   if (!m!.classification) fail("meta.classification required");
-  if (page!.content == null) fail("content required");
   return page as AlmanacPage;
 }

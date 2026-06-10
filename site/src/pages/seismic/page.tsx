@@ -1,14 +1,11 @@
-// SEISMIC · TECTONIC ACTIVITY — the first LIVE instrument.
-// Real USGS earthquakes (past 24h) as pips on the HoloGlobe at true coordinates,
-// magnitude-scaled and -colored; bezel diamonds mark the three largest events
-// by longitude. Bundled snapshot = real data (beautiful offline); fetchLive
-// earns the magenta ● SEISMIC LIVE. Entirely in site/ — the plugin gate holds.
+// SEISMIC · TECTONIC ACTIVITY — the first LIVE instrument, on the CONTRACT
+// renderer (HoloCanvas = 1:1 port of almanac-fused.html). Real USGS quakes
+// (24h) as pulsing pips at true coordinates, sized/colored by magnitude —
+// exactly the mockup's pips, but real. Bezel diamonds mark the 3 largest.
 
 import type { AlmanacPage, CanvasProps, DataFeed } from "@almanac/engine";
-import { Bezel, HoloGlobe, latLonToVec3, useFeed, type BezelMark } from "@almanac/engine";
-import { Canvas as R3F } from "@react-three/fiber";
-import { useEffect, useMemo, useState } from "react";
-import * as THREE from "three";
+import { HoloCanvas, useFeed, type HoloMark, type HoloPip } from "@almanac/engine";
+import { useEffect, useState } from "react";
 import snapshot from "./snapshot.json";
 
 interface Quake {
@@ -59,70 +56,26 @@ const feed: DataFeed<QuakeData> = {
   },
 };
 
-const GLOBE_R = 1.4;
-
 function magColor(m: number): string {
-  if (m >= 5.5) return "#ff5c47"; // major — hot
-  if (m >= 4) return "#ffb45e"; // significant — gold-amber
-  return "#7dffc4"; // minor — mint
-}
-
-/** Quake pips — data on the planet (the only thing allowed to sit on it). */
-function QuakePips({ quakes }: { quakes: Quake[] }) {
-  const pips = useMemo(
-    () =>
-      quakes.map((q) => ({
-        pos: latLonToVec3(q.lat, q.lon, GLOBE_R * 1.004),
-        size: 0.012 + Math.max(0, q.mag) * 0.007,
-        color: magColor(q.mag),
-        big: q.mag >= 5,
-      })),
-    [quakes],
-  );
-  return (
-    <group>
-      {pips.map((p, i) => (
-        <group key={i} position={p.pos}>
-          <mesh>
-            <sphereGeometry args={[p.size, 8, 8]} />
-            <meshBasicMaterial color={p.color} />
-          </mesh>
-          {p.big && (
-            <mesh>
-              <sphereGeometry args={[p.size * 2.4, 8, 8]} />
-              <meshBasicMaterial color={p.color} transparent opacity={0.25} blending={THREE.AdditiveBlending} />
-            </mesh>
-          )}
-        </group>
-      ))}
-    </group>
-  );
+  // the contract pip palette: mint minor · amber significant (mockup colors)
+  if (m >= 4) return "rgba(255,180,94,.95)";
+  return "rgba(127,230,200,.92)";
 }
 
 function SeisCanvas(_props: CanvasProps) {
   const state = useFeed(feed);
   const quakes = state?.data.quakes ?? [];
-  // bezel diamonds: the three largest events, placed by longitude on the 0–360 ring
-  const marks: BezelMark[] = quakes.slice(0, 3).map((q) => ({
-    deg: ((q.lon % 360) + 360) % 360,
+  const pips: HoloPip[] = quakes.map((q) => ({
+    lat: q.lat,
+    lon: q.lon,
+    size: Math.max(0, q.mag),
     color: magColor(q.mag),
   }));
-  return (
-    <>
-      <R3F
-        camera={{ fov: 45, position: [0, 0.18, 5.5] }}
-        dpr={[1, 1.5]}
-        gl={{ antialias: true, alpha: true }}
-        style={{ position: "absolute", inset: 0 }}
-      >
-        {/* contract: the globe is ALWAYS cyan — gold is for telemetry/bezel only */}
-        <HoloGlobe radius={GLOBE_R} spin={0.08}>
-          <QuakePips quakes={quakes} />
-        </HoloGlobe>
-      </R3F>
-      <Bezel marks={marks} />
-    </>
-  );
+  const marks: HoloMark[] = quakes.slice(0, 3).map((q) => ({
+    deg: ((q.lon % 360) + 360) % 360,
+    color: q.mag >= 5 ? "#ffb45e" : "#F0CE96",
+  }));
+  return <HoloCanvas pips={pips} marks={marks} />;
 }
 
 function LeftCol() {
@@ -143,10 +96,7 @@ function LeftCol() {
         <span className="v m">M {max ? max.mag.toFixed(1) : "—"}</span>
         <span className="u">{max ? max.place.toUpperCase().slice(0, 26) : ""}</span>
       </div>
-      <div className="cell">
-        <span className="k">events 24h</span>
-        <span className="v">{qs.length}</span>
-      </div>
+      <div className="cell"><span className="k">events 24h</span><span className="v">{qs.length}</span></div>
     </>
   );
 }
@@ -180,13 +130,6 @@ const page: AlmanacPage<QuakeData> = {
     classification: "USGS · ALL EVENTS 24H · MAGNITUDE-SCALED",
     order: 1,
   },
-  content: (
-    <>
-      Every pip is a real earthquake from the past 24 hours at its true coordinates —
-      <b> mint</b> &lt; M4 · <b>amber</b> M4–5.5 · <b>hot</b> ≥ M5.5. Bezel diamonds mark the
-      three largest by longitude. Live from <b>USGS</b>; snapshot when offline.
-    </>
-  ),
   Canvas: SeisCanvas,
   feed,
   readouts: { left: LeftCol, right: RightCol },

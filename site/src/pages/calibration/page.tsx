@@ -1,11 +1,9 @@
-// CALIBRATION — the engine's reference instrument, v4: the fused contract.
-// Full-bleed HoloGlobe in the bezel, telemetry in the edge columns. The
-// subsolar point lives as DATA in the readouts (ornament removed per contract:
-// no rings, no targets on the planet). Still entirely in site/ — plugin gate holds.
+// CALIBRATION — the engine's reference instrument, v5: the CONTRACT renderer.
+// HoloCanvas is the 1:1 port of almanac-fused.html's globe — this page is now
+// pixel-faithful to the locked design. Subsolar lives as data in the readouts.
 
 import type { AlmanacPage, CanvasProps, DataFeed } from "@almanac/engine";
-import { Bezel, HoloGlobe } from "@almanac/engine";
-import { Canvas as R3F } from "@react-three/fiber";
+import { HoloCanvas } from "@almanac/engine";
 import { useEffect, useState } from "react";
 
 interface CalConstants {
@@ -21,7 +19,7 @@ const feed: DataFeed<CalConstants> = {
   snapshot: { earthRadiusKm: 6371.0, obliquityDeg: 23.44, siderealDayH: 23.934, datum: "WGS-84" },
 };
 
-/** Subsolar point right now (approx ±0.5° — instrument-grade for a hologram). */
+/** Subsolar point right now (approx ±0.5°). */
 function subsolarNow(d = new Date()): { lat: number; lon: number } {
   const start = Date.UTC(d.getUTCFullYear(), 0, 0);
   const doy = (d.getTime() - start) / 86400000;
@@ -76,19 +74,7 @@ function RightCol() {
 }
 
 function CalCanvas(_props: CanvasProps) {
-  return (
-    <>
-      <R3F
-        camera={{ fov: 45, position: [0, 0.18, 5.5] }}
-        dpr={[1, 1.5]}
-        gl={{ antialias: true, alpha: true }}
-        style={{ position: "absolute", inset: 0 }}
-      >
-        <HoloGlobe radius={1.4} spin={0.1} />
-      </R3F>
-      <Bezel />
-    </>
-  );
+  return <HoloCanvas />;
 }
 
 const page: AlmanacPage<CalConstants> = {
@@ -99,12 +85,7 @@ const page: AlmanacPage<CalConstants> = {
     classification: "ENGINE REFERENCE · OFFLINE CONSTANTS · WGS-84",
     order: 0,
   },
-  content: (
-    <>
-      Reference instrument — real coastlines (Natural Earth land-110m) on the engine's{" "}
-      <b>HoloGlobe</b>, mounted in the bezel. Subsolar position computed live in the readouts.
-    </>
-  ),
+  content: null,
   Canvas: CalCanvas,
   feed,
   readouts: { left: LeftCol, right: RightCol },
