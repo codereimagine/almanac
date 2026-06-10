@@ -14,7 +14,7 @@ import * as THREE from "three";
 import { feature } from "topojson-client";
 import type { GeometryCollection, Topology } from "topojson-specification";
 import land110 from "world-atlas/land-110m.json";
-import { HOLO, HOLO_HI } from "../tokens";
+import { HOLO, HOLO_HI, MAG } from "../tokens";
 
 /** lat/lon (deg) → unit-sphere position (y = north). Use for instrument overlays. */
 export function latLonToVec3(latDeg: number, lonDeg: number, radius = 1): THREE.Vector3 {
@@ -148,10 +148,10 @@ export function HoloGlobe({ radius = 1.4, spin = 0.1, accent = HOLO, children, s
           blending={THREE.AdditiveBlending}
         />
       </mesh>
-      {/* scan ring lives outside the spin group — it sweeps the world */}
+      {/* scan ring lives outside the spin group — the scanner runs HOT (signature magenta) */}
       <mesh ref={scan} rotation={[Math.PI / 2, 0, 0]}>
         <torusGeometry args={[1, 0.0045, 6, 90]} />
-        <meshBasicMaterial color={HOLO_HI} transparent opacity={0.3} />
+        <meshBasicMaterial color={MAG} transparent opacity={0.35} />
       </mesh>
       {space}
     </group>

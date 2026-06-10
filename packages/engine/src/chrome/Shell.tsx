@@ -66,7 +66,7 @@ function Telemetry({ registry, liveCount }: { registry: Registry; liveCount: num
   return (
     <div id="alm-telemetry">
       <span className="brand">
-        <span className="brand-mark">A</span>ALMANAC
+        <span className="brand-mark">A</span>ALMA<b>NAC</b>
       </span>
       <span className="seg">
         EARTH SYSTEMS · <b>{registry.pages.length} INSTRUMENTS</b>
@@ -101,6 +101,7 @@ function IndexRack({ registry }: { registry: Registry }) {
               style={{ "--accent": p.meta.accent ?? SYSTEM_ACCENT[p.meta.system] } as React.CSSProperties}
               onClick={() => (window.location.hash = `#/page/${p.meta.id}`)}
             >
+              <span className="sweep" />
               <span className="idx">{String(i + 1).padStart(2, "0")}</span>
               <div className="sys">{p.meta.system.toUpperCase()}</div>
               <h3>{p.meta.title}</h3>
@@ -130,6 +131,7 @@ function PageView({ page }: { page: AlmanacPage }) {
       {Canvas && (
         <div className="canvas-frame">
           <span className="ret tl" /><span className="ret tr" /><span className="ret bl" /><span className="ret br" />
+          <span className="tape" />
           {page.feed && (
             <span className={`feed-tag ${feed?.live ? "live" : "snap"}`}>
               {feed?.live ? "● LIVE" : "SNAPSHOT"}
