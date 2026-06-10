@@ -8,10 +8,10 @@
    ════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* ── HALO base (the 80) ─────────────────────────────────────────────── */
-  --alm-void: #030911;            /* deep space blue-black */
-  --alm-void-2: #061222;
-  --alm-panel: rgba(8, 22, 40, 0.55);
+  /* ── HALO base (the 80) — dark mode: near-black, the neon carries it ── */
+  --alm-void: #02050b;            /* near-black, a breath of blue */
+  --alm-void-2: #040b18;
+  --alm-panel: rgba(4, 11, 22, 0.62);
   --alm-holo: #6fd3ff;            /* primary hologram blue */
   --alm-holo-hi: #d6f3ff;         /* hot core of the glow */
   --alm-holo-dim: rgba(111, 211, 255, 0.32);
@@ -56,16 +56,16 @@ body {
   font-family: var(--alm-mono);
   letter-spacing: 0.02em;
   overflow: hidden;
-  /* layered night (trio lineage: starnav's sky) — deep blue falling from the
-     top, violet haze on the horizon, a faint holo column under the instrument */
+  /* layered night (starnav lineage), DARK-MODE: the sky barely breathes —
+     violet haze + a whisper of blue at the top; near-black carries the neon */
   background-image:
-    radial-gradient(150% 70% at 50% 100%, rgba(86, 48, 120, 0.20) 0%, transparent 55%),
-    radial-gradient(120% 95% at 50% 0%, #122657 0%, #0b1740 32%, #070e28 62%, var(--alm-void) 100%),
-    radial-gradient(ellipse 55% 45% at 50% 60%, rgba(111, 211, 255, 0.05), transparent 65%);
+    radial-gradient(150% 70% at 50% 100%, rgba(72, 36, 104, 0.14) 0%, transparent 55%),
+    radial-gradient(120% 95% at 50% 0%, #0a1430 0%, #060d20 30%, #03070f 60%, var(--alm-void) 100%),
+    radial-gradient(ellipse 55% 45% at 50% 60%, rgba(111, 211, 255, 0.04), transparent 65%);
   background-size: 100% 100%, 100% 100%, 100% 100%;
 }
 body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 60;
-  background: radial-gradient(ellipse at center, transparent 62%, rgba(2, 6, 12, 0.72) 100%); }
+  background: radial-gradient(ellipse at center, transparent 58%, rgba(1, 3, 7, 0.82) 100%); }
 /* the signature texture: scanlines, faint and everywhere */
 body::before { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 59;
   background: repeating-linear-gradient(180deg,
