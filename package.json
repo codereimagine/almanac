@@ -1,0 +1,11 @@
+{
+  "name": "almanac",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": ["packages/engine", "site"],
+  "scripts": {
+    "dev": "npm --workspace site run dev",
+    "build": "npm --workspace site run build",
+    "preview": "npm --workspace site run preview"
+  }
+}

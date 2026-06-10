@@ -1,0 +1,141 @@
+/* ════════════════════════════════════════════════════════════════════════
+   ALMANAC ENGINE — instrument design system
+   80% HALO: luminous hologram. Forerunner-monitor / Cortana lineage —
+            blue-white-cyan volumetric glow, clean light wireframes, serene.
+   20% GHOSTS: the satellite framing — telemetry chrome, calibration ticks,
+            reticle corners, coordinates. Restrained, never dominant.
+   Distinct from VIAC (cyberpunk CRT-glitch) on purpose: no noise, no tears.
+   ════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── HALO base (the 80) ─────────────────────────────────────────────── */
+  --alm-void: #030911;            /* deep space blue-black */
+  --alm-void-2: #061222;
+  --alm-panel: rgba(8, 22, 40, 0.55);
+  --alm-holo: #6fd3ff;            /* primary hologram blue */
+  --alm-holo-hi: #d6f3ff;         /* hot core of the glow */
+  --alm-holo-dim: rgba(111, 211, 255, 0.32);
+  --alm-line: rgba(111, 211, 255, 0.16);
+  --alm-line-2: rgba(111, 211, 255, 0.38);
+  --alm-txt: #cfe6f5;
+  --alm-dim: #59718a;
+  --alm-glow-soft: 0 0 14px rgba(111, 211, 255, 0.35);
+  --alm-glow: 0 0 10px rgba(111, 211, 255, 0.55), 0 0 34px rgba(111, 211, 255, 0.18);
+
+  /* ── GHOSTS layer (the 20) ──────────────────────────────────────────── */
+  --alm-sat: #9fb4a6;             /* satellite-telemetry neutral */
+  --alm-sat-amber: #ffb45e;       /* caution / calibration accents */
+  --alm-tick: rgba(159, 180, 166, 0.4);
+
+  /* ── system accents (one per instrument family) ─────────────────────── */
+  --sys-ocean: #38b6ff;
+  --sys-seismic: #ffb45e;
+  --sys-geothermal: #ff7a4d;
+  --sys-weather: #8be9fd;
+  --sys-celestial: #c9a7ff;
+  --sys-time: #7dffc4;
+  --sys-position: #ffe27d;
+  --sys-orbit: #9fd0ff;
+  --sys-calibration: #6fd3ff;
+
+  --alm-display: "Space Grotesk Variable", "Space Grotesk", system-ui, sans-serif;
+  --alm-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body {
+  background: var(--alm-void);
+  color: var(--alm-txt);
+  font-family: var(--alm-mono);
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  /* the hologram volume: a soft light column rising from below center */
+  background-image:
+    radial-gradient(ellipse 70% 55% at 50% 110%, rgba(111, 211, 255, 0.10), transparent 60%),
+    radial-gradient(ellipse 45% 35% at 50% 38%, rgba(111, 211, 255, 0.05), transparent 60%),
+    linear-gradient(rgba(111, 211, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(111, 211, 255, 0.025) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 52px 52px, 52px 52px;
+}
+/* serene vignette — no noise, no scanline grit (that's VIAC's language) */
+body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 60;
+  background: radial-gradient(ellipse at center, transparent 62%, rgba(2, 6, 12, 0.7) 100%); }
+
+/* ── hologram text + panels ──────────────────────────────────────────── */
+.holo { color: var(--alm-holo); text-shadow: var(--alm-glow); }
+.holo-hi { color: var(--alm-holo-hi); text-shadow: var(--alm-glow); }
+.alm-panel {
+  position: relative; border: 1px solid var(--alm-line); background: var(--alm-panel);
+  backdrop-filter: blur(3px); display: flex; flex-direction: column; min-height: 0;
+}
+.alm-panel .p-ttl {
+  font-size: 10px; letter-spacing: 0.3em; color: var(--alm-holo); padding: 10px 14px;
+  border-bottom: 1px solid var(--alm-line); display: flex; justify-content: space-between;
+  align-items: center; flex: 0 0 auto; text-shadow: var(--alm-glow-soft);
+}
+.alm-panel .p-ttl .k { color: var(--alm-dim); letter-spacing: 0.18em; }
+.alm-panel .p-body { padding: 12px 14px; overflow: auto; flex: 1 1 auto; min-height: 0; }
+.alm-panel .p-body::-webkit-scrollbar { width: 5px; }
+.alm-panel .p-body::-webkit-scrollbar-thumb { background: var(--alm-line-2); }
+
+/* ── GHOSTS framing: reticle corners + calibration ticks ─────────────── */
+.ret { position: absolute; width: 10px; height: 10px; border-color: var(--alm-sat);
+  opacity: 0.75; }
+.ret.tl { top: -1px; left: -1px; border-left: 1px solid; border-top: 1px solid; }
+.ret.tr { top: -1px; right: -1px; border-right: 1px solid; border-top: 1px solid; }
+.ret.bl { bottom: -1px; left: -1px; border-left: 1px solid; border-bottom: 1px solid; }
+.ret.br { bottom: -1px; right: -1px; border-right: 1px solid; border-bottom: 1px solid; }
+.cal-ticks { height: 7px; flex: 0 0 auto; background:
+  repeating-linear-gradient(90deg, var(--alm-tick) 0 1px, transparent 1px 14px); opacity: 0.5; }
+
+/* ── telemetry bar (satellite chrome, top of shell) ──────────────────── */
+#alm-telemetry {
+  display: flex; align-items: center; gap: 0; border: 1px solid var(--alm-line);
+  background: linear-gradient(90deg, rgba(111, 211, 255, 0.05), transparent);
+  font-size: 10px; letter-spacing: 0.16em; padding: 0 12px; overflow: hidden;
+}
+#alm-telemetry .brand { color: var(--alm-holo-hi); font-family: var(--alm-display);
+  font-weight: 700; letter-spacing: 0.34em; padding: 0 16px 0 4px;
+  border-right: 1px solid var(--alm-line); text-shadow: var(--alm-glow); }
+#alm-telemetry .seg { padding: 0 14px; color: var(--alm-dim); border-right: 1px solid var(--alm-line); }
+#alm-telemetry .seg b { color: var(--alm-sat); font-weight: 500; }
+#alm-telemetry .seg.live b { color: var(--alm-holo); text-shadow: var(--alm-glow-soft); }
+#alm-telemetry .filler { flex: 1; }
+
+/* ── index: the instrument rack ──────────────────────────────────────── */
+.rack { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 14px; padding: 4px; }
+.inst-card { position: relative; border: 1px solid var(--alm-line); background: var(--alm-panel);
+  padding: 18px 16px 14px; cursor: pointer; transition: 0.22s; overflow: hidden; }
+.inst-card:hover { border-color: var(--accent, var(--alm-holo));
+  box-shadow: 0 0 22px color-mix(in srgb, var(--accent, var(--alm-holo)) 28%, transparent),
+    inset 0 0 28px rgba(111, 211, 255, 0.05); }
+.inst-card .sys { font-size: 9px; letter-spacing: 0.3em; color: var(--accent, var(--alm-holo));
+  text-shadow: 0 0 8px currentColor; }
+.inst-card h3 { font-family: var(--alm-display); font-size: 15px; font-weight: 600;
+  color: var(--alm-holo-hi); letter-spacing: 0.12em; margin: 8px 0 6px; text-shadow: var(--alm-glow-soft); }
+.inst-card .cls { font-size: 9.5px; color: var(--alm-dim); letter-spacing: 0.14em; }
+.inst-card .idx { position: absolute; top: 10px; right: 12px; font-size: 9px; color: var(--alm-tick); }
+
+/* ── page view ───────────────────────────────────────────────────────── */
+.page-head { display: flex; align-items: baseline; gap: 16px; padding: 2px 2px 10px; }
+.page-head h2 { font-family: var(--alm-display); font-size: 19px; font-weight: 600;
+  letter-spacing: 0.14em; color: var(--alm-holo-hi); text-shadow: var(--alm-glow); }
+.page-head .cls { font-size: 10px; color: var(--alm-sat); letter-spacing: 0.22em; }
+.page-head .back { margin-left: auto; cursor: pointer; font-size: 10px; letter-spacing: 0.2em;
+  color: var(--alm-dim); border: 1px solid var(--alm-line); padding: 6px 12px; transition: 0.2s; }
+.page-head .back:hover { color: var(--alm-holo); border-color: var(--alm-line-2); }
+
+.canvas-frame { position: relative; flex: 1 1 auto; min-height: 0; border: 1px solid var(--alm-line);
+  background: radial-gradient(ellipse 60% 70% at 50% 55%, rgba(111, 211, 255, 0.06), transparent 65%); }
+.feed-tag { position: absolute; top: 10px; right: 12px; z-index: 5; font-size: 9px;
+  letter-spacing: 0.24em; padding: 4px 10px; border: 1px solid var(--alm-line-2); }
+.feed-tag.live { color: var(--alm-holo); text-shadow: var(--alm-glow-soft);
+  border-color: var(--alm-holo); animation: alm-breathe 2.6s ease-in-out infinite; }
+.feed-tag.snap { color: var(--alm-sat); border-color: var(--alm-tick); }
+@keyframes alm-breathe { 50% { opacity: 0.55; } }
+
+.readout { font-size: 11.5px; line-height: 1.75; color: var(--alm-txt); max-width: 64ch; }
+.readout b { color: var(--alm-holo); font-weight: 500; }
+.readout .num { color: var(--alm-holo-hi); text-shadow: var(--alm-glow-soft); }

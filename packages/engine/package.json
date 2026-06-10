@@ -1,0 +1,17 @@
+{
+  "name": "@almanac/engine",
+  "version": "0.1.0",
+  "description": "Almanac engine — instrument design system, page registry, chrome, canvas + feed seams. The platform seed: sites consume this; pages are plugins.",
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./tokens.css": "./src/tokens/instrument.css"
+  },
+  "peerDependencies": {
+    "@react-three/fiber": "^9.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "three": "^0.170.0"
+  }
+}
