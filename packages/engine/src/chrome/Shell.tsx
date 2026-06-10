@@ -69,7 +69,8 @@ function Starfield({ n = 120 }: { n?: number }) {
 function Title({ sub }: { sub: string }) {
   return (
     <div id="alm-title">
-      <h1>
+      {/* the wordmark is the quiet way home — no extra chrome on screen */}
+      <h1 onClick={() => (window.location.hash = "#/")} style={{ pointerEvents: "auto", cursor: "pointer" }}>
         ALMA<b>NAC</b>
       </h1>
       <div className="s">{sub}</div>
@@ -134,17 +135,16 @@ function PageView({ page, registry }: { page: AlmanacPage; registry: Registry })
       <div id="alm-stage">{Canvas && <Canvas live={feed?.live ?? false} />}</div>
       {page.readouts?.left && <div className="alm-col left">{render(page.readouts.left)}</div>}
       {page.readouts?.right && <div className="alm-col right">{render(page.readouts.right)}</div>}
-      <div id="alm-readout">{render(page.content)}</div>
+      {/* contract strip: ◂ PREV · ● LIVE/◈ SNAPSHOT · NEXT ▸ — nothing else on screen */}
       <div id="alm-strip">
         <span className="navlink" onClick={() => (window.location.hash = prev ? `#/page/${prev.meta.id}` : "#/")}>
           <b>◂ PREV</b> {prev ? prev.meta.id.toUpperCase() : "INDEX"}
         </span>
-        <span
-          className={page.feed ? (feed?.live ? "live" : "snap") : "navlink"}
-          onClick={() => (window.location.hash = "#/")}
-        >
-          {page.feed ? (feed?.live ? `● ${page.meta.system.toUpperCase()} LIVE` : "◈ SNAPSHOT") : "≡ INDEX"}
-        </span>
+        {page.feed && (
+          <span className={feed?.live ? "live" : "snap"}>
+            {feed?.live ? `● ${page.meta.system.toUpperCase()} LIVE` : "◈ SNAPSHOT"}
+          </span>
+        )}
         <span className="navlink" onClick={() => (window.location.hash = next ? `#/page/${next.meta.id}` : "#/")}>
           {next ? next.meta.id.toUpperCase() : "INDEX"} <b>NEXT ▸</b>
         </span>

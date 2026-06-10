@@ -115,7 +115,8 @@ function SeisCanvas(_props: CanvasProps) {
         gl={{ antialias: true, alpha: true }}
         style={{ position: "absolute", inset: 0 }}
       >
-        <HoloGlobe radius={GLOBE_R} spin={0.08} accent="#ffb45e">
+        {/* contract: the globe is ALWAYS cyan — gold is for telemetry/bezel only */}
+        <HoloGlobe radius={GLOBE_R} spin={0.08}>
           <QuakePips quakes={quakes} />
         </HoloGlobe>
       </R3F>
