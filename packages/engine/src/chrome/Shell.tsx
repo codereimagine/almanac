@@ -151,9 +151,13 @@ function IndexView({ registry, upcoming = [] }: { registry: Registry; upcoming?:
       </div>
       {page?.preview && <div className="alm-col right index">{render(page.preview)}</div>}
       <div id="alm-strip">
-        {upcoming.length > 0 && (
+        {upcoming.length > 0 ? (
           <span>
             <b>◂</b> {pad(n + 1)}–{pad(n + upcoming.length)} AWAITING UPLINK
+          </span>
+        ) : (
+          <span>
+            <b>◂</b> CATALOG 01–{pad(n)}
           </span>
         )}
         <span className="live">● {n} INSTRUMENTS LIVE</span>

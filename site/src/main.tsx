@@ -10,7 +10,5 @@ import { createRoot } from "react-dom/client";
 const modules = import.meta.glob("./pages/*/page.tsx", { eager: true });
 const registry = buildRegistry(modules as Record<string, unknown>);
 
-// instruments not yet uplinked — shown dimmed on the globe-index
-const upcoming = ["TIME", "POSITION", "EARTH ORBIT"];
-
-createRoot(document.getElementById("root")!).render(<Shell registry={registry} upcoming={upcoming} />);
+// full catalog uplinked — no AWAITING rows left on the globe-index
+createRoot(document.getElementById("root")!).render(<Shell registry={registry} />);
