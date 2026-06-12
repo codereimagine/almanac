@@ -132,6 +132,16 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
 .alm-col.index .row.wait { cursor: default; opacity: 0.45; }
 .alm-col.index .row .dot { color: var(--alm-mag); text-shadow: 0 0 8px var(--alm-mag);
   animation: alm-tw 2.2s infinite; font-size: 8px; margin-left: 8px; }
+/* uplink boot — rows come online one by one on entry */
+.alm-col.index .row { transition: opacity 0.35s, border-bottom-color 0.2s; }
+.alm-col.index .row.boot { opacity: 0.06; }
+/* send-off flash on click, then the instrument takes over */
+.alm-col.index .row.go .nm { color: var(--alm-hi); text-shadow: 0 0 26px rgba(127, 217, 255, 0.95); }
+.alm-col.index .row.go .ix { color: var(--alm-mag); text-shadow: 0 0 12px var(--alm-mag); }
+
+/* light chrome fade on every view change — nothing heavy */
+@keyframes alm-in { from { opacity: 0; } to { opacity: 1; } }
+.alm-col, #alm-strip, #alm-tape, #alm-title .s { animation: alm-in 0.28s ease both; }
 
 /* ── readout block (page content, below-fold style) ──────────────────── */
 #alm-readout { position: fixed; left: 50%; transform: translateX(-50%); bottom: 52px; z-index: 9;

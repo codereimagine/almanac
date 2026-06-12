@@ -7,8 +7,9 @@
  */
 
 import { useEffect, useRef } from "react";
-import { feature } from "topojson-client";
+import { feature, mesh } from "topojson-client";
 import type { GeometryCollection, Topology } from "topojson-specification";
+import countries110 from "world-atlas/countries-110m.json";
 import land110 from "world-atlas/land-110m.json";
 
 export interface HoloPip {
@@ -41,6 +42,16 @@ function coastlines(): number[][][] {
   }
   COAST = rings;
   return rings;
+}
+
+/** Interior country borders only (shared arcs) — the coastline bloom stays the hero. */
+let BORDERS: number[][][] | null = null;
+function borders(): number[][][] {
+  if (BORDERS) return BORDERS;
+  const topo = countries110 as unknown as Topology<{ countries: GeometryCollection }>;
+  const m = mesh(topo, topo.objects.countries as never, (a, b) => a !== b);
+  BORDERS = m.coordinates as number[][][];
+  return BORDERS;
 }
 
 export interface HoloCanvasProps {
@@ -166,6 +177,21 @@ export function HoloCanvas({ pips = [], marks = [], spin = 0.05 }: HoloCanvasPro
         let on = false;
         for (let la = -88; la <= 88; la += 4) {
           const q = proj(lo, la);
+          if (q) {
+            on ? X.lineTo(q[0], q[1]) : X.moveTo(q[0], q[1]);
+            on = true;
+          } else on = false;
+        }
+        X.stroke();
+      }
+      // interior country borders — dim, no bloom (under the coastline pass)
+      X.strokeStyle = "rgba(127,217,255,.16)";
+      X.lineWidth = 1.3;
+      for (const ring of borders()) {
+        X.beginPath();
+        let on = false;
+        for (let i = 0; i < ring.length; i += 2) {
+          const q = proj(ring[i][0], ring[i][1]);
           if (q) {
             on ? X.lineTo(q[0], q[1]) : X.moveTo(q[0], q[1]);
             on = true;

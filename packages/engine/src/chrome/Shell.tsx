@@ -100,8 +100,21 @@ function FocusedCanvas({ page }: { page: AlmanacPage }) {
 
 function IndexView({ registry, upcoming = [] }: { registry: Registry; upcoming?: string[] }) {
   const [focus, setFocus] = useState(0);
+  const [booted, setBooted] = useState(0);
+  const [going, setGoing] = useState(-1);
   const auto = useRef(true);
   const n = registry.pages.length;
+
+  useEffect(() => {
+    // uplink boot — the instruments come online one by one, then the pips bloom
+    let i = 0;
+    const t = setInterval(() => {
+      i += 1;
+      setBooted(i);
+      if (i > n + upcoming.length) clearInterval(t);
+    }, 150);
+    return () => clearInterval(t);
+  }, [n, upcoming.length]);
 
   useEffect(() => {
     // idle auto-cycle (contract: 4.5s), hover pauses, leaving the page resumes
@@ -129,12 +142,16 @@ function IndexView({ registry, upcoming = [] }: { registry: Registry; upcoming?:
         {registry.pages.map((p, i) => (
           <div
             key={p.meta.id}
-            className={i === focus ? "row on" : "row"}
+            className={`row${i === focus ? " on" : ""}${i >= booted ? " boot" : ""}${i === going ? " go" : ""}`}
             onMouseEnter={() => {
               auto.current = false;
               setFocus(i);
             }}
-            onClick={() => (window.location.hash = `#/page/${p.meta.id}`)}
+            onClick={() => {
+              // light send-off flash, then enter the instrument
+              setGoing(i);
+              setTimeout(() => (window.location.hash = `#/page/${p.meta.id}`), 160);
+            }}
           >
             <span className="ix">{pad(i + 1)}</span>
             <span className="nm">{p.meta.index ?? p.meta.system.toUpperCase()}</span>
@@ -143,7 +160,7 @@ function IndexView({ registry, upcoming = [] }: { registry: Registry; upcoming?:
           </div>
         ))}
         {upcoming.map((name, i) => (
-          <div key={name} className="row wait">
+          <div key={name} className={`row wait${n + i >= booted ? " boot" : ""}`}>
             <span className="ix">{pad(n + i + 1)}</span>
             <span className="nm">{name}</span>
           </div>
