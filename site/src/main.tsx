@@ -11,6 +11,6 @@ const modules = import.meta.glob("./pages/*/page.tsx", { eager: true });
 const registry = buildRegistry(modules as Record<string, unknown>);
 
 // instruments not yet uplinked — shown dimmed on the globe-index
-const upcoming = ["WEATHER", "STARS · PLANETS", "TIME", "POSITION", "EARTH ORBIT"];
+const upcoming = ["STARS · PLANETS", "TIME", "POSITION", "EARTH ORBIT"];
 
 createRoot(document.getElementById("root")!).render(<Shell registry={registry} upcoming={upcoming} />);
