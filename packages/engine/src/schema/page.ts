@@ -57,6 +57,15 @@ export interface ProbeCell {
   u?: string;
 }
 
+/** The place handed to a probe — coordinates plus optional identity from the gazetteer/geocoder. */
+export interface ProbePlace {
+  lat: number;
+  lon: number;
+  name?: string;
+  /** IANA timezone (live-geocoded cities carry it; globe picks don't) */
+  tz?: string;
+}
+
 export interface AlmanacPage<T = unknown> {
   meta: PageMeta;
   /** optional prose — NOT rendered on the instrument (contract: no mid-screen text); reserved for index/docs */
@@ -67,8 +76,10 @@ export interface AlmanacPage<T = unknown> {
   readouts?: { left?: ReactNode | ComponentType; right?: ReactNode | ComponentType };
   /** index preview — the 3 stat cells the globe-index shows while this instrument is focused */
   preview?: ReactNode | ComponentType;
-  /** place probe — what this instrument reads AT a searched place (pure fn of feed data) */
-  probe?: (lat: number, lon: number, data: T) => ProbeCell[];
+  /** place probe — what this instrument reads AT a place. Sync (math on feed data)
+   *  or async (point fetch for the exact coordinates). The engine time-boxes,
+   *  caches, and absorbs failures — a probe can never break the dossier. */
+  probe?: (place: ProbePlace, data: T) => ProbeCell[] | Promise<ProbeCell[]>;
 }
 
 /** Runtime validation — fail loud at registry-build time, not render time. */

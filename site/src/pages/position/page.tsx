@@ -147,14 +147,14 @@ const page: AlmanacPage<PosData> = {
   readouts: { left: LeftCol, right: RightCol },
   preview: Preview,
   // what POSITION reads at a searched place: range from your fix (or from Greenwich)
-  probe: (lat, lon, d) => {
+  probe: (p, d) => {
     if (d.fix)
       return [
-        { k: "from your fix", v: haversineKm(lat, lon, d.fix.lat, d.fix.lon).toFixed(0), cls: "g", u: "KM" },
+        { k: "from your fix", v: haversineKm(p.lat, p.lon, d.fix.lat, d.fix.lon).toFixed(0), cls: "g", u: "KM" },
         { k: "datum", v: "WGS-84" },
       ];
     return [
-      { k: "from greenwich", v: haversineKm(lat, lon, 51.4769, 0).toFixed(0), cls: "g", u: "KM" },
+      { k: "from greenwich", v: haversineKm(p.lat, p.lon, 51.4769, 0).toFixed(0), cls: "g", u: "KM" },
       { k: "fix", v: "NO FIX", cls: "m" },
     ];
   },

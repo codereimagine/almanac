@@ -9,22 +9,81 @@
  * its preview stats sit on the right, idle auto-cycles every 4.5s.
  */
 
-import { Fragment, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
-import { setHoloTarget } from "../canvas/HoloCanvas";
+import { Component, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
+import { setHoloPickHandler, setHoloTarget } from "../canvas/HoloCanvas";
 import { useFeed } from "../feeds/feed";
+import { haversineKm } from "../geo";
+import { runProbe } from "../probes";
 import type { Registry } from "../registry/registry";
-import type { AlmanacPage } from "../schema/page";
+import type { AlmanacPage, ProbeCell } from "../schema/page";
+import { SYSTEM_ACCENT } from "../tokens";
+import { geocodeSearch } from "./geocode";
 import { Tape } from "./Tape";
 
-/** A searchable place — the site supplies the gazetteer; the engine stays name-blind. */
+/** A searchable place — local gazetteer entries and live-geocoded cities alike. */
 export interface GazetteerEntry {
   name: string;
   lat: number;
   lon: number;
+  /** "KANAGAWA · JAPAN" — from the geocoder */
+  region?: string;
+  /** IANA timezone — lets the dossier show the place's true local clock */
+  tz?: string;
 }
 
-// the picked place survives entering/leaving instruments (like the globe target)
-let PLACE: GazetteerEntry | null = null;
+const PLACE_KEY = "almanac.place";
+
+function loadPlace(): GazetteerEntry | null {
+  try {
+    const s = localStorage.getItem(PLACE_KEY);
+    if (!s) return null;
+    const p = JSON.parse(s) as Partial<GazetteerEntry>;
+    if (typeof p?.name === "string" && Number.isFinite(p?.lat) && Number.isFinite(p?.lon)) {
+      return p as GazetteerEntry;
+    }
+  } catch {
+    /* corrupt or unavailable storage — fresh start */
+  }
+  return null;
+}
+
+// the picked place survives navigation AND reloads (validated restore)
+let PLACE: GazetteerEntry | null = loadPlace();
+if (PLACE) setHoloTarget({ lat: PLACE.lat, lon: PLACE.lon });
+
+function persistPlace(p: GazetteerEntry | null): void {
+  try {
+    if (p) localStorage.setItem(PLACE_KEY, JSON.stringify(p));
+    else localStorage.removeItem(PLACE_KEY);
+  } catch {
+    /* storage may be denied — the session still works */
+  }
+}
+
+/** A crashing plugin page can NEVER blank the shell — it faults in contract chrome. */
+class Fault extends Component<{ children: ReactNode }, { err: boolean }> {
+  state = { err: false };
+  static getDerivedStateFromError(): { err: boolean } {
+    return { err: true };
+  }
+  render() {
+    if (!this.state.err) return this.props.children;
+    return (
+      <div id="alm-fault">
+        <span className="m">◈ INSTRUMENT FAULT</span>
+        <span
+          className="navlink"
+          onClick={() => {
+            this.setState({ err: false });
+            window.location.hash = "#/";
+          }}
+        >
+          RETURN TO INDEX ▸
+        </span>
+      </div>
+    );
+  }
+}
 
 function useRoute(): string {
   const [route, setRoute] = useState(() => window.location.hash.slice(1) || "/");
@@ -109,37 +168,66 @@ function FocusedCanvas({ page }: { page: AlmanacPage }) {
   return Canvas ? <Canvas live={feed?.live ?? false} /> : null;
 }
 
-/** What the focused instrument reads AT the searched place — live, via its probe. */
-function PlaceReadout({ page, place }: { page: AlmanacPage; place: GazetteerEntry }) {
+/** One dossier line: what THIS instrument reads at the place. Self-contained —
+ *  its probe failing, timing out, or being slow affects only this row. */
+function DossierRow({ page, place }: { page: AlmanacPage; place: GazetteerEntry }) {
   const feed = useFeed(page.feed);
+  const [cells, setCells] = useState<ProbeCell[] | null | undefined>(undefined);
   const data = feed?.data ?? page.feed?.snapshot;
-  const cells = page.probe && data !== undefined ? page.probe(place.lat, place.lon, data) : null;
-  const co = (v: number, pos: string, neg: string) => `${Math.abs(v).toFixed(1)}°${v >= 0 ? pos : neg}`;
+  useEffect(() => {
+    let dead = false;
+    const go = () => {
+      void runProbe(page, place, data).then((c) => {
+        if (!dead) setCells(c);
+      });
+    };
+    go();
+    const t = setInterval(go, 30_000); // live: clocks tick, feeds refresh
+    return () => {
+      dead = true;
+      clearInterval(t);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page.meta.id, place.lat, place.lon, place.tz, feed?.asOf]);
+  return (
+    <div className="drow" onClick={() => (window.location.hash = `#/page/${page.meta.id}`)}>
+      <span className="dk" style={{ color: page.meta.accent ?? SYSTEM_ACCENT[page.meta.system] }}>
+        {page.meta.index ?? page.meta.system.toUpperCase()}
+      </span>
+      {cells === undefined && <span className="dl"><span className="dlk">probing…</span></span>}
+      {cells === null && <span className="dl"><span className="dlk">unavailable</span></span>}
+      {cells?.map((c, i) => (
+        <span key={i} className="dl">
+          <span className="dlk">{c.k}</span> <b className={c.cls || undefined}>{c.v}</b>
+          {c.u && <i> {c.u}</i>}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/** The TARGET DOSSIER — every system's reading at the place, stacked, live. */
+function Dossier({ registry, place }: { registry: Registry; place: GazetteerEntry }) {
+  const co = (v: number, pos: string, neg: string) => `${Math.abs(v).toFixed(2)}°${v >= 0 ? pos : neg}`;
   return (
     <>
       <div className="cell">
         <span className="k">target</span>
         <span className="v m">{place.name}</span>
-        <span className="u">{co(place.lat, "N", "S")} {co(place.lon, "E", "W")}</span>
+        <span className="u">
+          {co(place.lat, "N", "S")} {co(place.lon, "E", "W")}
+          {place.region ? ` · ${place.region}` : ""}
+        </span>
       </div>
-      {cells?.map((c, i) => (
-        <Fragment key={i}>
-          <div className="rule" />
-          <div className="cell">
-            <span className="k">{c.k}</span>
-            <span className={c.cls ? `v ${c.cls}` : "v"}>
-              {c.v}
-              {c.u && <span className="u"> {c.u}</span>}
-            </span>
-          </div>
-        </Fragment>
-      ))}
-      {!cells && (
-        <>
-          <div className="rule" />
-          {render(page.preview)}
-        </>
-      )}
+      <div className="dstack">
+        {registry.pages
+          .filter((p) => p.probe)
+          .map((p, i) => (
+            <div key={p.meta.id} className="dwrap" style={{ animationDelay: `${i * 70}ms` } as React.CSSProperties}>
+              <DossierRow page={p} place={place} />
+            </div>
+          ))}
+      </div>
     </>
   );
 }
@@ -162,25 +250,71 @@ function IndexView({
   const n = registry.pages.length;
 
   const QU = q.trim().toUpperCase();
-  const hits =
+  const [remote, setRemote] = useState<GazetteerEntry[]>([]);
+  const seq = useRef(0);
+
+  // live geocoding — debounced, stale responses dropped, failure = silent local fallback
+  useEffect(() => {
+    if (QU.length < 2) {
+      setRemote([]);
+      return;
+    }
+    const my = ++seq.current;
+    const t = setTimeout(() => {
+      void geocodeSearch(QU).then((found) => {
+        if (seq.current === my) setRemote(found);
+      });
+    }, 300);
+    return () => clearTimeout(t);
+  }, [QU]);
+
+  const local =
     QU.length >= 2
       ? gazetteer
           .filter((g) => g.name.includes(QU))
           .sort((a, b) => Number(b.name.startsWith(QU)) - Number(a.name.startsWith(QU)) || a.name.length - b.name.length)
-          .slice(0, 5)
+          .slice(0, 4)
       : [];
+  // geocoded hits first (they carry region + timezone); dedupe by name
+  const hits: GazetteerEntry[] = [];
+  for (const g of [...remote, ...local]) {
+    if (!hits.some((h) => h.name === g.name)) hits.push(g);
+    if (hits.length >= 8) break;
+  }
+
   const pick = (g: GazetteerEntry) => {
     PLACE = g;
+    persistPlace(g);
     setPlace(g);
     setHoloTarget({ lat: g.lat, lon: g.lon });
     setQ("");
   };
   const clearPlace = () => {
     PLACE = null;
+    persistPlace(null);
     setPlace(null);
     setHoloTarget(null);
     setQ("");
   };
+
+  // click the planet — name the spot from the nearest known place
+  useEffect(() => {
+    setHoloPickHandler((lat, lon) => {
+      let best: GazetteerEntry | null = null;
+      let bd = Infinity;
+      for (const g of gazetteer) {
+        const k = haversineKm(lat, lon, g.lat, g.lon);
+        if (k < bd) {
+          bd = k;
+          best = g;
+        }
+      }
+      const name = best && bd <= 25 ? best.name : best && bd <= 600 ? `NEAR ${best.name}` : "OPEN WATERS";
+      pick({ name, lat: +lat.toFixed(2), lon: +lon.toFixed(2), tz: bd <= 25 ? best?.tz : undefined });
+    });
+    return () => setHoloPickHandler(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gazetteer]);
 
   useEffect(() => {
     // uplink boot — the instruments come online one by one, then the pips bloom
@@ -236,6 +370,7 @@ function IndexView({
               {hits.map((g) => (
                 <div key={g.name} className="hit" onClick={() => pick(g)}>
                   {g.name}
+                  {g.region && <span className="rg">{g.region}</span>}
                 </div>
               ))}
             </div>
@@ -272,9 +407,9 @@ function IndexView({
           </div>
         ))}
       </div>
-      {page && place ? (
+      {place ? (
         <div className="alm-col right index">
-          <PlaceReadout key={page.meta.id} page={page} place={place} />
+          <Dossier registry={registry} place={place} />
         </div>
       ) : (
         page?.preview && <div className="alm-col right index">{render(page.preview)}</div>
@@ -345,11 +480,13 @@ export function Shell({
   return (
     <>
       <Starfield />
-      {page ? (
-        <PageView key={page.meta.id} page={page} registry={registry} />
-      ) : (
-        <IndexView registry={registry} upcoming={upcoming} gazetteer={gazetteer} />
-      )}
+      <Fault key={page ? page.meta.id : "index"}>
+        {page ? (
+          <PageView key={page.meta.id} page={page} registry={registry} />
+        ) : (
+          <IndexView registry={registry} upcoming={upcoming} gazetteer={gazetteer} />
+        )}
+      </Fault>
     </>
   );
 }

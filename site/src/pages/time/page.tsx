@@ -165,14 +165,27 @@ const page: AlmanacPage<TimeData> = {
   feed,
   readouts: { left: LeftCol, right: RightCol },
   preview: Preview,
-  // what TIME reads at a searched place: local solar time + which side of the terminator
-  probe: (lat, lon, d) => {
-    const solar = new Date(Date.now() + lon * 4 * 60_000).toISOString().slice(11, 16);
-    const day = angularDeg(lat, lon, d.subsolar.lat, d.subsolar.lon) < 90;
-    return [
-      { k: "solar time", v: solar, cls: "g" },
-      { k: "state", v: day ? "DAYLIGHT" : "NIGHT", cls: day ? "" : "m" },
-    ];
+  // what TIME reads at a place: the true local clock (IANA tz from the geocoder,
+  // uptyme's pattern) when known, solar time always, and the terminator side
+  probe: (p, d) => {
+    const cells = [];
+    if (p.tz) {
+      try {
+        cells.push({
+          k: "local time",
+          v: new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: p.tz }).format(new Date()),
+          cls: "g",
+          u: p.tz.split("/").pop()!.replace(/_/g, " ").toUpperCase(),
+        });
+      } catch {
+        /* unknown tz string — solar time still tells the story */
+      }
+    }
+    const solar = new Date(Date.now() + p.lon * 4 * 60_000).toISOString().slice(11, 16);
+    const day = angularDeg(p.lat, p.lon, d.subsolar.lat, d.subsolar.lon) < 90;
+    cells.push({ k: "solar time", v: solar, cls: cells.length ? "" : "g" });
+    cells.push({ k: "state", v: day ? "DAYLIGHT" : "NIGHT", cls: day ? "" : "m" });
+    return cells;
   },
 };
 

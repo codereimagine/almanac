@@ -36,6 +36,14 @@ export function setHoloTarget(t: { lat: number; lon: number } | null): void {
   TARGET = t;
 }
 
+/** Click-the-planet handler (set by the index, cleared on unmount). The canvas
+ *  unprojects the click — orthographic inverse with the live rotation — and
+ *  calls back with lat/lon. Clicks off the disc or drags are ignored. */
+let PICK: ((lat: number, lon: number) => void) | null = null;
+export function setHoloPickHandler(fn: ((lat: number, lon: number) => void) | null): void {
+  PICK = fn;
+}
+
 let COAST: number[][][] | null = null;
 function coastlines(): number[][][] {
   if (COAST) return COAST;
@@ -96,6 +104,29 @@ export function HoloCanvas({ pips = [], marks = [], spin = 0.05, overlay }: Holo
     };
     fit();
     window.addEventListener("resize", fit);
+    // click the planet: pointer pair with drag rejection, then unproject
+    const down = { x: 0, y: 0, t: 0 };
+    const onDown = (e: PointerEvent) => {
+      down.x = e.clientX;
+      down.y = e.clientY;
+      down.t = Date.now();
+    };
+    const onUp = (e: PointerEvent) => {
+      if (!PICK) return;
+      if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6 || Date.now() - down.t > 500) return;
+      const rect = c.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      const dx = ((e.clientX - rect.left) * (c.width / rect.width) - cx()) / R;
+      const dy = (cy() - (e.clientY - rect.top) * (c.height / rect.height)) / R;
+      const r2 = dx * dx + dy * dy;
+      if (r2 > 1) return; // off the disc
+      const z = Math.sqrt(1 - r2);
+      const lat = (Math.asin(dy) * 180) / Math.PI;
+      const lon = ((Math.atan2(dx, z) * 180) / Math.PI - ROT + 540 * 3) % 360;
+      PICK(lat, lon > 180 ? lon - 360 : lon);
+    };
+    c.addEventListener("pointerdown", onDown);
+    c.addEventListener("pointerup", onUp);
     const cx = () => W / 2;
     const cy = () => (H / 2) * 1.08;
     const proj = (lon: number, lat: number): [number, number, number] | null => {
@@ -287,6 +318,8 @@ export function HoloCanvas({ pips = [], marks = [], spin = 0.05, overlay }: Holo
     return () => {
       alive = false;
       window.removeEventListener("resize", fit);
+      c.removeEventListener("pointerdown", onDown);
+      c.removeEventListener("pointerup", onUp);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spin]);

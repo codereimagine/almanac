@@ -195,18 +195,18 @@ const page: AlmanacPage<OceanData> = {
   readouts: { left: LeftCol, right: RightCol },
   preview: Preview,
   // what OCEAN reads at a searched place
-  probe: (lat, lon, d) => {
+  probe: (p, d) => {
     let bf: Flagship | null = null;
     let bfd = Infinity;
     for (const f of d.flagships) {
-      const k = haversineKm(lat, lon, f.lat, f.lon);
+      const k = haversineKm(p.lat, p.lon, f.lat, f.lon);
       if (k < bfd) {
         bfd = k;
         bf = f;
       }
     }
     let bsd = Infinity;
-    for (const s of d.stations) bsd = Math.min(bsd, haversineKm(lat, lon, s.lat, s.lon));
+    for (const s of d.stations) bsd = Math.min(bsd, haversineKm(p.lat, p.lon, s.lat, s.lon));
     return [
       {
         k: "nearest flagship",

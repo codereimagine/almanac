@@ -155,17 +155,17 @@ const page: AlmanacPage<QuakeData> = {
   readouts: { left: LeftCol, right: RightCol },
   preview: Preview,
   // what SEISMIC reads at a searched place
-  probe: (lat, lon, d) => {
+  probe: (p, d) => {
     let best: Quake | null = null;
     let bd = Infinity;
     for (const q of d.quakes) {
-      const k = haversineKm(lat, lon, q.lat, q.lon);
+      const k = haversineKm(p.lat, p.lon, q.lat, q.lon);
       if (k < bd) {
         bd = k;
         best = q;
       }
     }
-    const within = d.quakes.filter((q) => haversineKm(lat, lon, q.lat, q.lon) <= 1000).length;
+    const within = d.quakes.filter((q) => haversineKm(p.lat, p.lon, q.lat, q.lon) <= 1000).length;
     return [
       {
         k: "nearest quake 24h",

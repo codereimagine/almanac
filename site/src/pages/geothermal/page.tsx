@@ -163,18 +163,18 @@ const page: AlmanacPage<GeoData> = {
   readouts: { left: LeftCol, right: RightCol },
   preview: Preview,
   // what GEOTHERMAL reads at a searched place
-  probe: (lat, lon, d) => {
+  probe: (p, d) => {
     let bm: Monitored | null = null;
     let bmd = Infinity;
     for (const v of d.monitored) {
-      const k = haversineKm(lat, lon, v.lat, v.lon);
+      const k = haversineKm(p.lat, p.lon, v.lat, v.lon);
       if (k < bmd) {
         bmd = k;
         bm = v;
       }
     }
     let bvd = Infinity;
-    for (const c of Object.values(COORDS)) bvd = Math.min(bvd, haversineKm(lat, lon, c[0], c[1]));
+    for (const c of Object.values(COORDS)) bvd = Math.min(bvd, haversineKm(p.lat, p.lon, c[0], c[1]));
     return [
       {
         k: "nearest monitored",

@@ -163,6 +163,36 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
   color: var(--alm-txt); cursor: pointer; text-align: left; transition: 0.15s; }
 #alm-search .hit:hover { color: var(--alm-hi); background: rgba(127, 217, 255, 0.06);
   text-shadow: 0 0 10px rgba(127, 217, 255, 0.5); }
+#alm-search .hit .rg { display: block; font-size: 7.5px; color: var(--alm-dim);
+  letter-spacing: 0.2em; margin-top: 2px; text-shadow: none; }
+
+/* ── the target dossier — every system's reading at the place ────────── */
+.alm-col.right.index { overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
+.alm-col.right.index::-webkit-scrollbar { display: none; }
+.dstack { display: flex; flex-direction: column; align-self: stretch; }
+.dwrap { animation: alm-in 0.3s ease both; }
+.drow { padding: 9px 0 10px; border-bottom: 1px solid rgba(127, 217, 255, 0.08);
+  cursor: pointer; transition: border-bottom-color 0.2s; }
+.drow:hover { border-bottom-color: rgba(127, 217, 255, 0.4); }
+.drow .dk { display: block; font-size: 9px; letter-spacing: 0.3em;
+  text-shadow: 0 0 10px currentColor; margin-bottom: 4px; }
+.drow .dl { display: block; font-size: 8.5px; color: var(--alm-dim);
+  letter-spacing: 0.12em; margin-top: 2px; }
+.drow .dl b { font-family: var(--alm-display); font-weight: 400; font-size: 13px;
+  color: var(--alm-hi); letter-spacing: 0.06em; font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 12px rgba(127, 217, 255, 0.4); }
+.drow .dl b.g { color: var(--alm-gold); text-shadow: 0 0 10px var(--alm-gold-glow); }
+.drow .dl b.m { color: var(--alm-mag); text-shadow: 0 0 10px var(--alm-mag-glow); }
+.drow .dl i { font-style: normal; font-size: 7.5px; color: var(--alm-dim); letter-spacing: 0.2em; }
+
+/* instrument fault — the boundary chrome (a plugin crash never blanks the shell) */
+#alm-fault { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%);
+  z-index: 12; display: flex; gap: 30px; font-size: 10px; letter-spacing: 0.3em;
+  align-items: baseline; }
+#alm-fault .m { color: var(--alm-mag); text-shadow: 0 0 12px var(--alm-mag);
+  animation: alm-tw 2.2s infinite; }
+#alm-fault .navlink { cursor: pointer; color: var(--alm-dim); }
+#alm-fault .navlink:hover { color: var(--alm-txt); }
 
 /* ── readout block (page content, below-fold style) ──────────────────── */
 #alm-readout { position: fixed; left: 50%; transform: translateX(-50%); bottom: 52px; z-index: 9;

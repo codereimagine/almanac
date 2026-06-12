@@ -69,6 +69,18 @@ const feed: DataFeed<WxData> = {
 const byTemp = (d: WxData): CityWx[] => [...d.cities].sort((a, b) => b.temp - a.temp);
 const deg = (t: number): string => `${t.toFixed(1)}°C`;
 
+/** WMO weather code → HUD condition word (bewthr's code buckets). */
+const WMO: Record<number, string> = {
+  0: "CLEAR", 1: "MOSTLY CLEAR", 2: "PARTLY CLOUDY", 3: "OVERCAST",
+  45: "FOG", 48: "RIME FOG",
+  51: "DRIZZLE", 53: "DRIZZLE", 55: "DRIZZLE", 56: "FRZ DRIZZLE", 57: "FRZ DRIZZLE",
+  61: "LIGHT RAIN", 63: "RAIN", 65: "HEAVY RAIN", 66: "FRZ RAIN", 67: "FRZ RAIN",
+  71: "LIGHT SNOW", 73: "SNOW", 75: "HEAVY SNOW", 77: "SNOW GRAINS",
+  80: "SHOWERS", 81: "SHOWERS", 82: "VIOLENT SHOWERS", 85: "SNOW SHOWERS", 86: "SNOW SHOWERS",
+  95: "THUNDERSTORM", 96: "THUNDERSTORM", 99: "THUNDERSTORM",
+};
+const wmoWord = (c: number): string => WMO[c] ?? `WMO ${c}`;
+
 const D = Math.PI / 180;
 const STORM = new Set([95, 96, 99]);
 
@@ -213,26 +225,55 @@ const page: AlmanacPage<WxData> = {
   feed,
   readouts: { left: LeftCol, right: RightCol },
   preview: Preview,
-  // what WEATHER reads at a searched place
-  probe: (lat, lon, d) => {
-    let b: CityWx | null = null;
-    let bd = Infinity;
-    for (const c of d.cities) {
-      const k = haversineKm(lat, lon, c.lat, c.lon);
-      if (k < bd) {
-        bd = k;
-        b = c;
+  // what WEATHER reads at a place — a REAL point forecast for the exact
+  // coordinates (bewthr's fetch); if that fails, the nearest grid reading,
+  // honestly labelled. The dossier never goes dark.
+  probe: async (p, d) => {
+    try {
+      const r = await fetch(
+        `${OM}?latitude=${p.lat.toFixed(3)}&longitude=${p.lon.toFixed(3)}&current=temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,wind_speed_10m`,
+      );
+      if (!r.ok) throw new Error(`open-meteo ${r.status}`);
+      const e = (await r.json()) as {
+        current?: {
+          temperature_2m?: number;
+          apparent_temperature?: number;
+          relative_humidity_2m?: number;
+          precipitation?: number;
+          weather_code?: number;
+          wind_speed_10m?: number;
+        };
+      };
+      const c = e.current;
+      if (c?.temperature_2m == null) throw new Error("no point data");
+      const precip = c.precipitation ?? 0;
+      return [
+        { k: "now", v: deg(c.temperature_2m), cls: c.temperature_2m >= 32 ? "m" : "g", u: wmoWord(c.weather_code ?? 0) },
+        {
+          k: "feels",
+          v: deg(c.apparent_temperature ?? c.temperature_2m),
+          u: `RH ${(c.relative_humidity_2m ?? 0).toFixed(0)}%`,
+        },
+        {
+          k: "wind",
+          v: (c.wind_speed_10m ?? 0).toFixed(0),
+          u: `KM/H${precip > 0 ? ` · PRECIP ${precip.toFixed(1)} MM` : ""}`,
+        },
+      ];
+    } catch {
+      let b: CityWx | null = null;
+      let bd = Infinity;
+      for (const c of d.cities) {
+        const k = haversineKm(p.lat, p.lon, c.lat, c.lon);
+        if (k < bd) {
+          bd = k;
+          b = c;
+        }
       }
+      return b
+        ? [{ k: "grid fallback", v: deg(b.temp), cls: "g", u: `${b.name.slice(0, 12)} GRID · ${bd.toFixed(0)} KM` }]
+        : [];
     }
-    return [
-      {
-        k: "nearest reading",
-        v: b ? deg(b.temp) : "—",
-        cls: b && b.temp >= 32 ? "m" : "g",
-        u: b ? `${b.name.slice(0, 14)} · ${bd.toFixed(0)} KM` : "",
-      },
-      { k: "wind there", v: b ? b.wind.toFixed(0) : "—", u: "KM/H" },
-    ];
   },
 };
 

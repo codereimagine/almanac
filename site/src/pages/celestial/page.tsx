@@ -212,10 +212,10 @@ const page: AlmanacPage<CelData> = {
   readouts: { left: LeftCol, right: RightCol },
   preview: Preview,
   // what the sky does over a searched place: altitude = 90° − distance to sub-point
-  probe: (lat, lon, d) => {
+  probe: (p, d) => {
     const alt = (kind: string): number | null => {
       const b = d.bodies.find((x) => x.kind === kind);
-      return b ? 90 - angularDeg(lat, lon, b.lat, b.lon) : null;
+      return b ? 90 - angularDeg(p.lat, p.lon, b.lat, b.lon) : null;
     };
     const sa = alt("sun");
     const ma = alt("moon");
