@@ -16,6 +16,10 @@ interface CityWx {
   lon: number;
   temp: number;
   wind: number;
+  /** wind FROM bearing, deg */
+  dir: number;
+  /** WMO weather code */
+  code: number;
 }
 interface WxData {
   asOf: number;
@@ -36,14 +40,26 @@ const feed: DataFeed<WxData> = {
   fetchLive: async () => {
     const lats = CITIES.map((c) => c[1]).join(",");
     const lons = CITIES.map((c) => c[2]).join(",");
-    const r = await fetch(`${OM}?latitude=${lats}&longitude=${lons}&current=temperature_2m,wind_speed_10m`);
+    const r = await fetch(
+      `${OM}?latitude=${lats}&longitude=${lons}&current=temperature_2m,wind_speed_10m,wind_direction_10m,weather_code`,
+    );
     if (!r.ok) throw new Error(`open-meteo ${r.status}`);
-    const d = (await r.json()) as { current?: { temperature_2m?: number; wind_speed_10m?: number } }[];
+    const d = (await r.json()) as {
+      current?: { temperature_2m?: number; wind_speed_10m?: number; wind_direction_10m?: number; weather_code?: number };
+    }[];
     const cities: CityWx[] = [];
     (Array.isArray(d) ? d : [d]).forEach((e, i) => {
       const t = e.current?.temperature_2m;
       if (t == null || !CITIES[i]) return;
-      cities.push({ name: CITIES[i][0], lat: CITIES[i][1], lon: CITIES[i][2], temp: t, wind: e.current?.wind_speed_10m ?? 0 });
+      cities.push({
+        name: CITIES[i][0],
+        lat: CITIES[i][1],
+        lon: CITIES[i][2],
+        temp: t,
+        wind: e.current?.wind_speed_10m ?? 0,
+        dir: e.current?.wind_direction_10m ?? 0,
+        code: e.current?.weather_code ?? 0,
+      });
     });
     if (cities.length === 0) throw new Error("open-meteo empty");
     return { asOf: Date.now(), cities };
@@ -52,6 +68,20 @@ const feed: DataFeed<WxData> = {
 
 const byTemp = (d: WxData): CityWx[] => [...d.cities].sort((a, b) => b.temp - a.temp);
 const deg = (t: number): string => `${t.toFixed(1)}°C`;
+
+const D = Math.PI / 180;
+const STORM = new Set([95, 96, 99]);
+
+/** Destination point dKm along bearing brg — the wind streak's path. */
+function dest(lat: number, lon: number, brg: number, dKm: number): [number, number] {
+  const dl = dKm / 6371;
+  const th = brg * D;
+  const ph = lat * D;
+  const sin2 = Math.sin(ph) * Math.cos(dl) + Math.cos(ph) * Math.sin(dl) * Math.cos(th);
+  const lat2 = Math.asin(sin2) / D;
+  const lon2 = lon + Math.atan2(Math.sin(th) * Math.sin(dl) * Math.cos(ph), Math.cos(dl) - Math.sin(ph) * sin2) / D;
+  return [lat2, ((lon2 + 540) % 360) - 180];
+}
 
 function WxCanvas(_props: CanvasProps) {
   const state = useFeed(feed);
@@ -66,7 +96,35 @@ function WxCanvas(_props: CanvasProps) {
     deg: ((c.lon % 360) + 360) % 360,
     color: c.temp >= 40 ? "#ff2bd6" : "#F0CE96",
   }));
-  return <HoloCanvas pips={pips} marks={marks} />;
+  // the planet breathes — wind streaks drifting downwind from every city,
+  // speed-scaled, storm cells in magenta (bewthr's condition-driven motion, on a globe)
+  const overlay = (X: CanvasRenderingContext2D, proj: (lon: number, lat: number) => [number, number, number] | null, t: number) => {
+    d.cities.forEach((c, i) => {
+      if (c.wind < 4) return;
+      const flow = (c.dir + 180) % 360; // FROM bearing -> downwind
+      const len = Math.min(700, Math.max(140, c.wind * 12));
+      const phase = (t / 1500 + i * 0.37) % 1;
+      const storm = STORM.has(c.code);
+      X.strokeStyle = storm ? "rgba(255,43,214,.65)" : "rgba(127,217,255,.5)";
+      X.lineWidth = 1.7;
+      X.shadowColor = storm ? "#ff2bd6" : "#7fd9ff";
+      X.shadowBlur = 7;
+      X.beginPath();
+      let on = false;
+      for (let s = 0; s <= 4; s++) {
+        const k = phase * 0.75 + (s / 4) * 0.25; // a quarter-length segment riding the path
+        const [la, lo] = dest(c.lat, c.lon, flow, len * k);
+        const q = proj(lo, la);
+        if (q) {
+          on ? X.lineTo(q[0], q[1]) : X.moveTo(q[0], q[1]);
+          on = true;
+        } else on = false;
+      }
+      X.stroke();
+    });
+    X.shadowBlur = 0;
+  };
+  return <HoloCanvas pips={pips} marks={marks} overlay={overlay} />;
 }
 
 function LeftCol() {

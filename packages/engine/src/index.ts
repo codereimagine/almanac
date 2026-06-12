@@ -1,7 +1,7 @@
 /** @almanac/engine — public API. Sites consume this; pages are plugins. */
 
 export { HoloCanvas, setHoloTarget } from "./canvas/HoloCanvas";
-export type { HoloCanvasProps, HoloMark, HoloPip } from "./canvas/HoloCanvas";
+export type { HoloCanvasProps, HoloMark, HoloPip, HoloProject } from "./canvas/HoloCanvas";
 export { HoloGlobe, latLonToVec3 } from "./canvas/HoloGlobe";
 export type { HoloGlobeProps } from "./canvas/HoloGlobe";
 export { Bezel } from "./chrome/Bezel";

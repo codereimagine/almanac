@@ -147,11 +147,14 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
 #alm-search { position: fixed; top: 96px; left: 50%; transform: translateX(-50%);
   width: 300px; z-index: 11; animation: alm-in 0.28s ease both; }
 #alm-search input { width: 100%; background: transparent; border: 0;
-  border-bottom: 1px solid var(--alm-line); color: var(--alm-hi);
+  border-bottom: 1px solid var(--alm-line-2); color: var(--alm-hi);
   font-family: var(--alm-mono); font-size: 10px; letter-spacing: 0.3em;
   text-align: center; padding: 6px 4px; outline: none; text-transform: uppercase; }
-#alm-search input::placeholder { color: var(--alm-dim); }
-#alm-search input:focus { border-bottom-color: var(--alm-line-2); }
+#alm-search input::placeholder { color: var(--alm-txt); opacity: 0.75; }
+#alm-search input:focus { border-bottom-color: var(--alm-cyan);
+  box-shadow: 0 8px 14px -12px rgba(127, 217, 255, 0.55); }
+#alm-search .glyph { position: absolute; left: -20px; top: 5px; color: var(--alm-cyan);
+  font-size: 13px; text-shadow: 0 0 10px rgba(127, 217, 255, 0.6); pointer-events: none; }
 #alm-search .x { position: absolute; right: -20px; top: 6px; cursor: pointer;
   color: var(--alm-mag); text-shadow: 0 0 8px var(--alm-mag); font-size: 10px; }
 #alm-search .hits { position: absolute; top: 100%; left: 0; right: 0;

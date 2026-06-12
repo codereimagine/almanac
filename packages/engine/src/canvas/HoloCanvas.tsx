@@ -62,17 +62,22 @@ function borders(): number[][][] {
   return BORDERS;
 }
 
+/** Projects lon/lat to canvas px on the visible hemisphere (null = far side). */
+export type HoloProject = (lon: number, lat: number) => [number, number, number] | null;
+
 export interface HoloCanvasProps {
   pips?: HoloPip[];
   marks?: HoloMark[];
   /** deg/frame at 60fps — contract value .05 */
   spin?: number;
+  /** per-frame instrument layer, drawn over the pips in globe space (wind flow, currents…) */
+  overlay?: (X: CanvasRenderingContext2D, proj: HoloProject, tMs: number) => void;
 }
 
-export function HoloCanvas({ pips = [], marks = [], spin = 0.05 }: HoloCanvasProps) {
+export function HoloCanvas({ pips = [], marks = [], spin = 0.05, overlay }: HoloCanvasProps) {
   const ref = useRef<HTMLCanvasElement>(null);
-  const propsRef = useRef({ pips, marks });
-  propsRef.current = { pips, marks };
+  const propsRef = useRef({ pips, marks, overlay });
+  propsRef.current = { pips, marks, overlay };
 
   useEffect(() => {
     const c = ref.current!;
@@ -192,9 +197,9 @@ export function HoloCanvas({ pips = [], marks = [], spin = 0.05 }: HoloCanvasPro
         }
         X.stroke();
       }
-      // interior country borders — dim, no bloom (under the coastline pass)
-      X.strokeStyle = "rgba(127,217,255,.16)";
-      X.lineWidth = 1.3;
+      // interior country borders — clearly readable, still under the coastline bloom
+      X.strokeStyle = "rgba(127,217,255,.34)";
+      X.lineWidth = 1.8;
       for (const ring of borders()) {
         X.beginPath();
         let on = false;
@@ -260,6 +265,8 @@ export function HoloCanvas({ pips = [], marks = [], spin = 0.05 }: HoloCanvasPro
         X.globalAlpha = 1;
         X.shadowBlur = 0;
       }
+      // instrument overlay (animated, in globe space)
+      propsRef.current.overlay?.(X, proj, t);
       // the searched place — white-hot pip, brighter pulse than data pips
       if (TARGET) {
         const q = proj(TARGET.lon, TARGET.lat);

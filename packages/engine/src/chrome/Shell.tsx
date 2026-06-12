@@ -215,6 +215,7 @@ function IndexView({
       <Title sub="EARTH SYSTEMS · SELECT INSTRUMENT" />
       {gazetteer.length > 0 && (
         <div id="alm-search">
+          <span className="glyph">⌕</span>
           <input
             value={q}
             placeholder={place ? `◈ ${place.name}` : "SEARCH · COUNTRY OR CITY"}
