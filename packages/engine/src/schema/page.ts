@@ -48,6 +48,15 @@ export interface CanvasProps {
   live: boolean;
 }
 
+/** One readout cell produced by a place probe (k/v[/u] in the contract's cell language). */
+export interface ProbeCell {
+  k: string;
+  v: string;
+  /** value accent: "g" gold · "m" magenta · "" plain */
+  cls?: string;
+  u?: string;
+}
+
 export interface AlmanacPage<T = unknown> {
   meta: PageMeta;
   /** optional prose — NOT rendered on the instrument (contract: no mid-screen text); reserved for index/docs */
@@ -58,6 +67,8 @@ export interface AlmanacPage<T = unknown> {
   readouts?: { left?: ReactNode | ComponentType; right?: ReactNode | ComponentType };
   /** index preview — the 3 stat cells the globe-index shows while this instrument is focused */
   preview?: ReactNode | ComponentType;
+  /** place probe — what this instrument reads AT a searched place (pure fn of feed data) */
+  probe?: (lat: number, lon: number, data: T) => ProbeCell[];
 }
 
 /** Runtime validation — fail loud at registry-build time, not render time. */

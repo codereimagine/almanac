@@ -6,7 +6,7 @@
 // previews the frame silently and shows the fix once granted elsewhere.
 
 import type { AlmanacPage, CanvasProps, DataFeed } from "@almanac/engine";
-import { HoloCanvas, useFeed, type HoloMark, type HoloPip } from "@almanac/engine";
+import { haversineKm, HoloCanvas, useFeed, type HoloMark, type HoloPip } from "@almanac/engine";
 import { useEffect, useState } from "react";
 
 interface Fix {
@@ -146,6 +146,18 @@ const page: AlmanacPage<PosData> = {
   feed,
   readouts: { left: LeftCol, right: RightCol },
   preview: Preview,
+  // what POSITION reads at a searched place: range from your fix (or from Greenwich)
+  probe: (lat, lon, d) => {
+    if (d.fix)
+      return [
+        { k: "from your fix", v: haversineKm(lat, lon, d.fix.lat, d.fix.lon).toFixed(0), cls: "g", u: "KM" },
+        { k: "datum", v: "WGS-84" },
+      ];
+    return [
+      { k: "from greenwich", v: haversineKm(lat, lon, 51.4769, 0).toFixed(0), cls: "g", u: "KM" },
+      { k: "fix", v: "NO FIX", cls: "m" },
+    ];
+  },
 };
 
 export default page;

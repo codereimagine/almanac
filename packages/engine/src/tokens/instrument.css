@@ -143,6 +143,24 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
 @keyframes alm-in { from { opacity: 0; } to { opacity: 1; } }
 .alm-col, #alm-strip, #alm-tape, #alm-title .s { animation: alm-in 0.28s ease both; }
 
+/* ── search: find a country or city, the globe answers ───────────────── */
+#alm-search { position: fixed; top: 96px; left: 50%; transform: translateX(-50%);
+  width: 300px; z-index: 11; animation: alm-in 0.28s ease both; }
+#alm-search input { width: 100%; background: transparent; border: 0;
+  border-bottom: 1px solid var(--alm-line); color: var(--alm-hi);
+  font-family: var(--alm-mono); font-size: 10px; letter-spacing: 0.3em;
+  text-align: center; padding: 6px 4px; outline: none; text-transform: uppercase; }
+#alm-search input::placeholder { color: var(--alm-dim); }
+#alm-search input:focus { border-bottom-color: var(--alm-line-2); }
+#alm-search .x { position: absolute; right: -20px; top: 6px; cursor: pointer;
+  color: var(--alm-mag); text-shadow: 0 0 8px var(--alm-mag); font-size: 10px; }
+#alm-search .hits { position: absolute; top: 100%; left: 0; right: 0;
+  background: rgba(2, 6, 16, 0.92); border: 1px solid var(--alm-line); border-top: 0; }
+#alm-search .hit { padding: 6px 10px; font-size: 9px; letter-spacing: 0.26em;
+  color: var(--alm-txt); cursor: pointer; text-align: left; transition: 0.15s; }
+#alm-search .hit:hover { color: var(--alm-hi); background: rgba(127, 217, 255, 0.06);
+  text-shadow: 0 0 10px rgba(127, 217, 255, 0.5); }
+
 /* ── readout block (page content, below-fold style) ──────────────────── */
 #alm-readout { position: fixed; left: 50%; transform: translateX(-50%); bottom: 52px; z-index: 9;
   width: min(700px, 80vw); text-align: center; font-size: 10.5px; line-height: 1.7;

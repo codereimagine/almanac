@@ -28,6 +28,14 @@ export interface HoloMark {
  *  the index swaps the focused instrument's canvas without the globe snapping back. */
 let ROT = 0;
 
+/** The searched place — a bright white pip every HoloCanvas draws until cleared.
+ *  Module scope on purpose: the target survives navigating between instruments.
+ *  (No crosshairs/rings — the contract bans targets drawn ON the planet.) */
+let TARGET: { lat: number; lon: number } | null = null;
+export function setHoloTarget(t: { lat: number; lon: number } | null): void {
+  TARGET = t;
+}
+
 let COAST: number[][][] | null = null;
 function coastlines(): number[][][] {
   if (COAST) return COAST;
@@ -251,6 +259,20 @@ export function HoloCanvas({ pips = [], marks = [], spin = 0.05 }: HoloCanvasPro
         X.fill();
         X.globalAlpha = 1;
         X.shadowBlur = 0;
+      }
+      // the searched place — white-hot pip, brighter pulse than data pips
+      if (TARGET) {
+        const q = proj(TARGET.lon, TARGET.lat);
+        if (q) {
+          const s = 7 * (1 + 0.3 * Math.sin(t / 220));
+          X.fillStyle = "rgba(234,249,255,.95)";
+          X.shadowColor = "#eaf9ff";
+          X.shadowBlur = 24;
+          X.beginPath();
+          X.arc(q[0], q[1], s, 0, 7);
+          X.fill();
+          X.shadowBlur = 0;
+        }
       }
       requestAnimationFrame(draw);
     };

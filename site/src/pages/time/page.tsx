@@ -5,7 +5,7 @@
 // apparent sidereal time, Julian date. Always live; the terminator slides west.
 
 import type { AlmanacPage, CanvasProps, DataFeed } from "@almanac/engine";
-import { HoloCanvas, useFeed, type HoloMark, type HoloPip } from "@almanac/engine";
+import { angularDeg, HoloCanvas, useFeed, type HoloMark, type HoloPip } from "@almanac/engine";
 import * as A from "astronomy-engine";
 import { useEffect, useState } from "react";
 import snapshot from "./snapshot.json";
@@ -165,6 +165,15 @@ const page: AlmanacPage<TimeData> = {
   feed,
   readouts: { left: LeftCol, right: RightCol },
   preview: Preview,
+  // what TIME reads at a searched place: local solar time + which side of the terminator
+  probe: (lat, lon, d) => {
+    const solar = new Date(Date.now() + lon * 4 * 60_000).toISOString().slice(11, 16);
+    const day = angularDeg(lat, lon, d.subsolar.lat, d.subsolar.lon) < 90;
+    return [
+      { k: "solar time", v: solar, cls: "g" },
+      { k: "state", v: day ? "DAYLIGHT" : "NIGHT", cls: day ? "" : "m" },
+    ];
+  },
 };
 
 export default page;

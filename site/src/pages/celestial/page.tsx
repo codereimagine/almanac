@@ -5,7 +5,7 @@
 // ephemeris is always live. Readouts: moon phase, subsolar, next full/new moon.
 
 import type { AlmanacPage, CanvasProps, DataFeed } from "@almanac/engine";
-import { HoloCanvas, useFeed, type HoloMark, type HoloPip } from "@almanac/engine";
+import { angularDeg, HoloCanvas, useFeed, type HoloMark, type HoloPip } from "@almanac/engine";
 import * as A from "astronomy-engine";
 import { useEffect, useState } from "react";
 import snapshot from "./snapshot.json";
@@ -211,6 +211,22 @@ const page: AlmanacPage<CelData> = {
   feed,
   readouts: { left: LeftCol, right: RightCol },
   preview: Preview,
+  // what the sky does over a searched place: altitude = 90° − distance to sub-point
+  probe: (lat, lon, d) => {
+    const alt = (kind: string): number | null => {
+      const b = d.bodies.find((x) => x.kind === kind);
+      return b ? 90 - angularDeg(lat, lon, b.lat, b.lon) : null;
+    };
+    const sa = alt("sun");
+    const ma = alt("moon");
+    const cell = (k: string, a: number | null, cls: string) => ({
+      k,
+      v: a != null ? `${a.toFixed(1)}°` : "—",
+      cls: a != null && a > 0 ? cls : "",
+      u: a != null ? (a > 0 ? "ABOVE HORIZON" : "BELOW HORIZON") : "",
+    });
+    return [cell("sun altitude", sa, "g"), cell("moon altitude", ma, "m")];
+  },
 };
 
 export default page;

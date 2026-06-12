@@ -4,7 +4,7 @@
 // exactly the mockup's pips, but real. Bezel diamonds mark the 3 largest.
 
 import type { AlmanacPage, CanvasProps, DataFeed } from "@almanac/engine";
-import { HoloCanvas, useFeed, type HoloMark, type HoloPip } from "@almanac/engine";
+import { haversineKm, HoloCanvas, useFeed, type HoloMark, type HoloPip } from "@almanac/engine";
 import { useEffect, useState } from "react";
 import snapshot from "./snapshot.json";
 
@@ -154,6 +154,28 @@ const page: AlmanacPage<QuakeData> = {
   feed,
   readouts: { left: LeftCol, right: RightCol },
   preview: Preview,
+  // what SEISMIC reads at a searched place
+  probe: (lat, lon, d) => {
+    let best: Quake | null = null;
+    let bd = Infinity;
+    for (const q of d.quakes) {
+      const k = haversineKm(lat, lon, q.lat, q.lon);
+      if (k < bd) {
+        bd = k;
+        best = q;
+      }
+    }
+    const within = d.quakes.filter((q) => haversineKm(lat, lon, q.lat, q.lon) <= 1000).length;
+    return [
+      {
+        k: "nearest quake 24h",
+        v: best ? `M ${best.mag.toFixed(1)}` : "—",
+        cls: "m",
+        u: best ? `${bd.toFixed(0)} KM AWAY` : "",
+      },
+      { k: "within 1000 km", v: String(within), cls: "g" },
+    ];
+  },
 };
 
 export default page;

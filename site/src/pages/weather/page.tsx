@@ -5,7 +5,7 @@
 // three hottest longitudes.
 
 import type { AlmanacPage, CanvasProps, DataFeed } from "@almanac/engine";
-import { HoloCanvas, useFeed, type HoloMark, type HoloPip } from "@almanac/engine";
+import { haversineKm, HoloCanvas, useFeed, type HoloMark, type HoloPip } from "@almanac/engine";
 import { useEffect, useState } from "react";
 import citiesTable from "./cities.json";
 import snapshot from "./snapshot.json";
@@ -155,6 +155,27 @@ const page: AlmanacPage<WxData> = {
   feed,
   readouts: { left: LeftCol, right: RightCol },
   preview: Preview,
+  // what WEATHER reads at a searched place
+  probe: (lat, lon, d) => {
+    let b: CityWx | null = null;
+    let bd = Infinity;
+    for (const c of d.cities) {
+      const k = haversineKm(lat, lon, c.lat, c.lon);
+      if (k < bd) {
+        bd = k;
+        b = c;
+      }
+    }
+    return [
+      {
+        k: "nearest reading",
+        v: b ? deg(b.temp) : "—",
+        cls: b && b.temp >= 32 ? "m" : "g",
+        u: b ? `${b.name.slice(0, 14)} · ${bd.toFixed(0)} KM` : "",
+      },
+      { k: "wind there", v: b ? b.wind.toFixed(0) : "—", u: "KM/H" },
+    ];
+  },
 };
 
 export default page;

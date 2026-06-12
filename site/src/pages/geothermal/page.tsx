@@ -4,7 +4,7 @@
 // amber, WATCH/WARNING in magenta. Bezel diamonds mark the elevated vents.
 
 import type { AlmanacPage, CanvasProps, DataFeed } from "@almanac/engine";
-import { HoloCanvas, useFeed, type HoloMark, type HoloPip } from "@almanac/engine";
+import { haversineKm, HoloCanvas, useFeed, type HoloMark, type HoloPip } from "@almanac/engine";
 import { useEffect, useState } from "react";
 import coordsTable from "./gvp-coords.json";
 import snapshot from "./snapshot.json";
@@ -162,6 +162,29 @@ const page: AlmanacPage<GeoData> = {
   feed,
   readouts: { left: LeftCol, right: RightCol },
   preview: Preview,
+  // what GEOTHERMAL reads at a searched place
+  probe: (lat, lon, d) => {
+    let bm: Monitored | null = null;
+    let bmd = Infinity;
+    for (const v of d.monitored) {
+      const k = haversineKm(lat, lon, v.lat, v.lon);
+      if (k < bmd) {
+        bmd = k;
+        bm = v;
+      }
+    }
+    let bvd = Infinity;
+    for (const c of Object.values(COORDS)) bvd = Math.min(bvd, haversineKm(lat, lon, c[0], c[1]));
+    return [
+      {
+        k: "nearest monitored",
+        v: bm ? bm.alert : "—",
+        cls: bm && sev(bm.alert) >= 2 ? "m" : "g",
+        u: bm ? `${bm.name.toUpperCase().slice(0, 14)} · ${bmd.toFixed(0)} KM` : "",
+      },
+      { k: "nearest vent", v: Number.isFinite(bvd) ? bvd.toFixed(0) : "—", u: "KM" },
+    ];
+  },
 };
 
 export default page;

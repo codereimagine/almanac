@@ -1,17 +1,19 @@
 /** @almanac/engine — public API. Sites consume this; pages are plugins. */
 
-export { HoloCanvas } from "./canvas/HoloCanvas";
+export { HoloCanvas, setHoloTarget } from "./canvas/HoloCanvas";
 export type { HoloCanvasProps, HoloMark, HoloPip } from "./canvas/HoloCanvas";
 export { HoloGlobe, latLonToVec3 } from "./canvas/HoloGlobe";
 export type { HoloGlobeProps } from "./canvas/HoloGlobe";
 export { Bezel } from "./chrome/Bezel";
 export type { BezelMark } from "./chrome/Bezel";
 export { Shell } from "./chrome/Shell";
+export type { GazetteerEntry } from "./chrome/Shell";
 export { Tape } from "./chrome/Tape";
 export { useFeed } from "./feeds/feed";
 export type { DataFeed, FeedState } from "./feeds/feed";
+export { angularDeg, haversineKm } from "./geo";
 export { buildRegistry } from "./registry/registry";
 export type { Registry } from "./registry/registry";
 export { validatePage } from "./schema/page";
-export type { AlmanacPage, CanvasProps, PageMeta, SystemKind } from "./schema/page";
+export type { AlmanacPage, CanvasProps, PageMeta, ProbeCell, SystemKind } from "./schema/page";
 export { HOLO, HOLO_HI, SAT, SAT_AMBER, SAT_HI, SYSTEM_ACCENT, VOID } from "./tokens";

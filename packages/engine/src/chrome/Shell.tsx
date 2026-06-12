@@ -9,11 +9,22 @@
  * its preview stats sit on the right, idle auto-cycles every 4.5s.
  */
 
-import { useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
+import { setHoloTarget } from "../canvas/HoloCanvas";
 import { useFeed } from "../feeds/feed";
 import type { Registry } from "../registry/registry";
 import type { AlmanacPage } from "../schema/page";
 import { Tape } from "./Tape";
+
+/** A searchable place — the site supplies the gazetteer; the engine stays name-blind. */
+export interface GazetteerEntry {
+  name: string;
+  lat: number;
+  lon: number;
+}
+
+// the picked place survives entering/leaving instruments (like the globe target)
+let PLACE: GazetteerEntry | null = null;
 
 function useRoute(): string {
   const [route, setRoute] = useState(() => window.location.hash.slice(1) || "/");
@@ -98,12 +109,78 @@ function FocusedCanvas({ page }: { page: AlmanacPage }) {
   return Canvas ? <Canvas live={feed?.live ?? false} /> : null;
 }
 
-function IndexView({ registry, upcoming = [] }: { registry: Registry; upcoming?: string[] }) {
+/** What the focused instrument reads AT the searched place — live, via its probe. */
+function PlaceReadout({ page, place }: { page: AlmanacPage; place: GazetteerEntry }) {
+  const feed = useFeed(page.feed);
+  const data = feed?.data ?? page.feed?.snapshot;
+  const cells = page.probe && data !== undefined ? page.probe(place.lat, place.lon, data) : null;
+  const co = (v: number, pos: string, neg: string) => `${Math.abs(v).toFixed(1)}°${v >= 0 ? pos : neg}`;
+  return (
+    <>
+      <div className="cell">
+        <span className="k">target</span>
+        <span className="v m">{place.name}</span>
+        <span className="u">{co(place.lat, "N", "S")} {co(place.lon, "E", "W")}</span>
+      </div>
+      {cells?.map((c, i) => (
+        <Fragment key={i}>
+          <div className="rule" />
+          <div className="cell">
+            <span className="k">{c.k}</span>
+            <span className={c.cls ? `v ${c.cls}` : "v"}>
+              {c.v}
+              {c.u && <span className="u"> {c.u}</span>}
+            </span>
+          </div>
+        </Fragment>
+      ))}
+      {!cells && (
+        <>
+          <div className="rule" />
+          {render(page.preview)}
+        </>
+      )}
+    </>
+  );
+}
+
+function IndexView({
+  registry,
+  upcoming = [],
+  gazetteer = [],
+}: {
+  registry: Registry;
+  upcoming?: string[];
+  gazetteer?: GazetteerEntry[];
+}) {
   const [focus, setFocus] = useState(0);
   const [booted, setBooted] = useState(0);
   const [going, setGoing] = useState(-1);
+  const [q, setQ] = useState("");
+  const [place, setPlace] = useState<GazetteerEntry | null>(PLACE);
   const auto = useRef(true);
   const n = registry.pages.length;
+
+  const QU = q.trim().toUpperCase();
+  const hits =
+    QU.length >= 2
+      ? gazetteer
+          .filter((g) => g.name.includes(QU))
+          .sort((a, b) => Number(b.name.startsWith(QU)) - Number(a.name.startsWith(QU)) || a.name.length - b.name.length)
+          .slice(0, 5)
+      : [];
+  const pick = (g: GazetteerEntry) => {
+    PLACE = g;
+    setPlace(g);
+    setHoloTarget({ lat: g.lat, lon: g.lon });
+    setQ("");
+  };
+  const clearPlace = () => {
+    PLACE = null;
+    setPlace(null);
+    setHoloTarget(null);
+    setQ("");
+  };
 
   useEffect(() => {
     // uplink boot — the instruments come online one by one, then the pips bloom
@@ -136,6 +213,34 @@ function IndexView({ registry, upcoming = [] }: { registry: Registry; upcoming?:
   return (
     <>
       <Title sub="EARTH SYSTEMS · SELECT INSTRUMENT" />
+      {gazetteer.length > 0 && (
+        <div id="alm-search">
+          <input
+            value={q}
+            placeholder={place ? `◈ ${place.name}` : "SEARCH · COUNTRY OR CITY"}
+            spellCheck={false}
+            onChange={(e) => setQ(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && hits[0]) pick(hits[0]);
+              if (e.key === "Escape") clearPlace();
+            }}
+          />
+          {place && (
+            <span className="x" onClick={clearPlace}>
+              ✕
+            </span>
+          )}
+          {hits.length > 0 && (
+            <div className="hits">
+              {hits.map((g) => (
+                <div key={g.name} className="hit" onClick={() => pick(g)}>
+                  {g.name}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       {/* the globe IS the index — remount per focus so the pips bloom in */}
       <div id="alm-stage">{page && <FocusedCanvas key={page.meta.id} page={page} />}</div>
       <div className="alm-col left index">
@@ -166,7 +271,13 @@ function IndexView({ registry, upcoming = [] }: { registry: Registry; upcoming?:
           </div>
         ))}
       </div>
-      {page?.preview && <div className="alm-col right index">{render(page.preview)}</div>}
+      {page && place ? (
+        <div className="alm-col right index">
+          <PlaceReadout key={page.meta.id} page={page} place={place} />
+        </div>
+      ) : (
+        page?.preview && <div className="alm-col right index">{render(page.preview)}</div>
+      )}
       <div id="alm-strip">
         {upcoming.length > 0 ? (
           <span>
@@ -218,7 +329,15 @@ function PageView({ page, registry }: { page: AlmanacPage; registry: Registry })
   );
 }
 
-export function Shell({ registry, upcoming }: { registry: Registry; upcoming?: string[] }) {
+export function Shell({
+  registry,
+  upcoming,
+  gazetteer,
+}: {
+  registry: Registry;
+  upcoming?: string[];
+  gazetteer?: GazetteerEntry[];
+}) {
   const route = useRoute();
   const pageId = route.startsWith("/page/") ? route.slice(6) : null;
   const page = pageId ? registry.byId.get(pageId) : null;
@@ -228,7 +347,7 @@ export function Shell({ registry, upcoming }: { registry: Registry; upcoming?: s
       {page ? (
         <PageView key={page.meta.id} page={page} registry={registry} />
       ) : (
-        <IndexView registry={registry} upcoming={upcoming} />
+        <IndexView registry={registry} upcoming={upcoming} gazetteer={gazetteer} />
       )}
     </>
   );
