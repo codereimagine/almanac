@@ -54,6 +54,8 @@ export interface AlmanacPage<T = unknown> {
   feed?: DataFeed<T>;
   /** edge-column telemetry (the fused contract's left/right readouts) */
   readouts?: { left?: ReactNode | ComponentType; right?: ReactNode | ComponentType };
+  /** index preview — the 3 stat cells the globe-index shows while this instrument is focused */
+  preview?: ReactNode | ComponentType;
 }
 
 /** Runtime validation — fail loud at registry-build time, not render time. */

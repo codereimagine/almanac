@@ -2,13 +2,17 @@
  * The instrument shell — LOCKED to the fused contract (almanac-fused.html):
  * airy ALMA·NAC title, B's heading tape, full-bleed stage, edge telemetry
  * columns, bottom prev/live/next strip. Hash routing, zero router deps.
+ *
+ * The index is LOCKED to the entry contract (almanac-entry-B-globe-index.html):
+ * THE GLOBE IS THE INDEX. The focused instrument's own canvas fills the stage
+ * (real pips, real bezel marks), instrument rows on the left answer to hover,
+ * its preview stats sit on the right, idle auto-cycles every 4.5s.
  */
 
-import { useEffect, useMemo, useState, type ComponentType, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 import { useFeed } from "../feeds/feed";
 import type { Registry } from "../registry/registry";
 import type { AlmanacPage } from "../schema/page";
-import { SYSTEM_ACCENT } from "../tokens";
 import { Tape } from "./Tape";
 
 function useRoute(): string {
@@ -87,34 +91,74 @@ function render(node: ReactNode | ComponentType | undefined): ReactNode {
   return node as ReactNode;
 }
 
-function IndexView({ registry }: { registry: Registry }) {
-  const utc = useUtc();
+/** The focused instrument's own face, with its feed — the index previews real data. */
+function FocusedCanvas({ page }: { page: AlmanacPage }) {
+  const feed = useFeed(page.feed);
+  const Canvas = page.Canvas;
+  return Canvas ? <Canvas live={feed?.live ?? false} /> : null;
+}
+
+function IndexView({ registry, upcoming = [] }: { registry: Registry; upcoming?: string[] }) {
+  const [focus, setFocus] = useState(0);
+  const auto = useRef(true);
+  const n = registry.pages.length;
+
+  useEffect(() => {
+    // idle auto-cycle (contract: 4.5s), hover pauses, leaving the page resumes
+    const t = setInterval(() => {
+      if (auto.current) setFocus((f) => (f + 1) % Math.max(n, 1));
+    }, 4500);
+    const resume = () => {
+      auto.current = true;
+    };
+    document.body.addEventListener("mouseleave", resume);
+    return () => {
+      clearInterval(t);
+      document.body.removeEventListener("mouseleave", resume);
+    };
+  }, [n]);
+
+  const page = registry.pages[focus];
+  const pad = (v: number) => String(v).padStart(2, "0");
   return (
     <>
-      <Title sub={`EARTH SYSTEMS · ${String(registry.pages.length).padStart(2, "0")} INSTRUMENTS`} />
-      <div id="alm-rack">
-        <div className="rack">
-          {registry.pages.map((p, i) => (
-            <div
-              key={p.meta.id}
-              className="inst-card"
-              style={{ "--accent": p.meta.accent ?? SYSTEM_ACCENT[p.meta.system] } as React.CSSProperties}
-              onClick={() => (window.location.hash = `#/page/${p.meta.id}`)}
-            >
-              <span className="idx">{String(i + 1).padStart(2, "0")}</span>
-              <div className="sys">{p.meta.system.toUpperCase()}</div>
-              <h3>{p.meta.title}</h3>
-              <div className="cls">{p.meta.classification}</div>
-            </div>
-          ))}
-        </div>
+      <Title sub="EARTH SYSTEMS · SELECT INSTRUMENT" />
+      {/* the globe IS the index — remount per focus so the pips bloom in */}
+      <div id="alm-stage">{page && <FocusedCanvas key={page.meta.id} page={page} />}</div>
+      <div className="alm-col left index">
+        {registry.pages.map((p, i) => (
+          <div
+            key={p.meta.id}
+            className={i === focus ? "row on" : "row"}
+            onMouseEnter={() => {
+              auto.current = false;
+              setFocus(i);
+            }}
+            onClick={() => (window.location.hash = `#/page/${p.meta.id}`)}
+          >
+            <span className="ix">{pad(i + 1)}</span>
+            <span className="nm">{p.meta.system.toUpperCase()}</span>
+            <span className="dot">●</span>
+            <span className="ln">{p.meta.classification}</span>
+          </div>
+        ))}
+        {upcoming.map((name, i) => (
+          <div key={name} className="row wait">
+            <span className="ix">{pad(n + i + 1)}</span>
+            <span className="nm">{name}</span>
+          </div>
+        ))}
       </div>
+      {page?.preview && <div className="alm-col right index">{render(page.preview)}</div>}
       <div id="alm-strip">
+        {upcoming.length > 0 && (
+          <span>
+            <b>◂</b> {pad(n + 1)}–{pad(n + upcoming.length)} AWAITING UPLINK
+          </span>
+        )}
+        <span className="live">● {n} INSTRUMENTS LIVE</span>
         <span>
-          UTC <b>{utc}</b>
-        </span>
-        <span>
-          REF <b>WGS-84</b>
+          HOVER TO PREVIEW <b>▸</b>
         </span>
       </div>
     </>
@@ -153,14 +197,18 @@ function PageView({ page, registry }: { page: AlmanacPage; registry: Registry })
   );
 }
 
-export function Shell({ registry }: { registry: Registry }) {
+export function Shell({ registry, upcoming }: { registry: Registry; upcoming?: string[] }) {
   const route = useRoute();
   const pageId = route.startsWith("/page/") ? route.slice(6) : null;
   const page = pageId ? registry.byId.get(pageId) : null;
   return (
     <>
       <Starfield />
-      {page ? <PageView key={page.meta.id} page={page} registry={registry} /> : <IndexView registry={registry} />}
+      {page ? (
+        <PageView key={page.meta.id} page={page} registry={registry} />
+      ) : (
+        <IndexView registry={registry} upcoming={upcoming} />
+      )}
     </>
   );
 }

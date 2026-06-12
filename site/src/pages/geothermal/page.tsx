@@ -129,6 +129,27 @@ function RightCol() {
   );
 }
 
+/** Globe-index preview — the entry contract's 3 geothermal cells. */
+function Preview() {
+  const state = useFeed(feed);
+  const d = state?.data ?? (snapshot as GeoData);
+  const top = elevated(d)[0];
+  return (
+    <>
+      <div className="cell">
+        <span className="k">highest alert</span>
+        <span className="v m">{top ? top.alert : "—"}</span>
+      </div>
+      <div className="rule" />
+      <div className="cell"><span className="k">elevated</span><span className="v g">{elevated(d).length}</span></div>
+      <div className="rule" />
+      <div className="cell">
+        <span className="k">holocene vents</span><span className="v">{Object.keys(COORDS).length}</span>
+      </div>
+    </>
+  );
+}
+
 const page: AlmanacPage<GeoData> = {
   meta: {
     id: "geothermal",
@@ -140,6 +161,7 @@ const page: AlmanacPage<GeoData> = {
   Canvas: GeoCanvas,
   feed,
   readouts: { left: LeftCol, right: RightCol },
+  preview: Preview,
 };
 
 export default page;

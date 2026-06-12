@@ -77,6 +77,31 @@ function CalCanvas(_props: CanvasProps) {
   return <HoloCanvas />;
 }
 
+/** Globe-index preview — the entry contract's 3 calibration cells. */
+function Preview() {
+  const [utc, setUtc] = useState("--:--:--");
+  const [sun, setSun] = useState(subsolarNow());
+  useEffect(() => {
+    const t = setInterval(() => {
+      setUtc(new Date().toISOString().slice(11, 19));
+      setSun(subsolarNow());
+    }, 1000);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <>
+      <div className="cell"><span className="k">utc</span><span className="v">{utc}</span></div>
+      <div className="rule" />
+      <div className="cell">
+        <span className="k">subsolar</span>
+        <span className="v g">{fmt(sun.lat, "N", "S")} {fmt(sun.lon, "E", "W")}</span>
+      </div>
+      <div className="rule" />
+      <div className="cell"><span className="k">obliquity</span><span className="v">{feed.snapshot.obliquityDeg}°</span></div>
+    </>
+  );
+}
+
 const page: AlmanacPage<CalConstants> = {
   meta: {
     id: "calibration",
@@ -89,6 +114,7 @@ const page: AlmanacPage<CalConstants> = {
   Canvas: CalCanvas,
   feed,
   readouts: { left: LeftCol, right: RightCol },
+  preview: Preview,
 };
 
 export default page;

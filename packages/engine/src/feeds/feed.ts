@@ -10,6 +10,33 @@
 
 import { useEffect, useRef, useState } from "react";
 
+/**
+ * Live results are cached per feed.id (TTL = refreshMs) and in-flight pulls are
+ * shared. Several components read the same feed (canvas + both readout columns,
+ * and the index previews the focused instrument every few seconds) — the seam
+ * guarantees that costs one upstream request per interval, not one per mount.
+ */
+const LIVE_CACHE = new Map<string, { at: number; data: unknown }>();
+const IN_FLIGHT = new Map<string, Promise<unknown>>();
+
+function pullLive<T>(feed: DataFeed<T>): Promise<T> {
+  const ttl = feed.refreshMs ?? 60_000;
+  const hit = LIVE_CACHE.get(feed.id);
+  if (hit && Date.now() - hit.at < ttl) return Promise.resolve(hit.data as T);
+  let p = IN_FLIGHT.get(feed.id) as Promise<T> | undefined;
+  if (!p) {
+    p = feed
+      .fetchLive!()
+      .then((data) => {
+        LIVE_CACHE.set(feed.id, { at: Date.now(), data });
+        return data;
+      })
+      .finally(() => IN_FLIGHT.delete(feed.id));
+    IN_FLIGHT.set(feed.id, p);
+  }
+  return p;
+}
+
 export interface DataFeed<T> {
   /** stable id, e.g. "usgs-quakes-24h" */
   id: string;
@@ -40,7 +67,7 @@ export function useFeed<T>(feed: DataFeed<T> | undefined): FeedState<T> | null {
     let dead = false;
     const pull = async () => {
       try {
-        const data = await feed.fetchLive!();
+        const data = await pullLive(feed);
         if (!dead) setState({ data, live: true, asOf: new Date().toISOString() });
       } catch {
         /* stay on snapshot — the instrument never breaks on network */

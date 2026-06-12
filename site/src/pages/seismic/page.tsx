@@ -122,6 +122,26 @@ function RightCol() {
   );
 }
 
+/** Globe-index preview — the entry contract's 3 seismic cells. */
+function Preview() {
+  const state = useFeed(feed);
+  const qs = state?.data.quakes ?? [];
+  const max = qs[0];
+  const m5 = qs.filter((q) => q.mag >= 5).length;
+  return (
+    <>
+      <div className="cell">
+        <span className="k">max 24h</span>
+        <span className="v m">M {max ? max.mag.toFixed(1) : "—"}</span>
+      </div>
+      <div className="rule" />
+      <div className="cell"><span className="k">events</span><span className="v">{qs.length}</span></div>
+      <div className="rule" />
+      <div className="cell"><span className="k">m5.0+</span><span className="v g">{m5}</span></div>
+    </>
+  );
+}
+
 const page: AlmanacPage<QuakeData> = {
   meta: {
     id: "seismic",
@@ -133,6 +153,7 @@ const page: AlmanacPage<QuakeData> = {
   Canvas: SeisCanvas,
   feed,
   readouts: { left: LeftCol, right: RightCol },
+  preview: Preview,
 };
 
 export default page;

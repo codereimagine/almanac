@@ -114,28 +114,24 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
 /* ── the stage (full-bleed canvas behind the chrome) ─────────────────── */
 #alm-stage { position: fixed; inset: 0; z-index: 2; }
 
-/* ── index: instrument cards floating in the void ────────────────────── */
-#alm-rack { position: fixed; top: 150px; bottom: 90px; left: 50%; transform: translateX(-50%);
-  width: min(1060px, 92vw); z-index: 10; overflow: auto; padding: 4px; }
-#alm-rack::-webkit-scrollbar { width: 5px; }
-#alm-rack::-webkit-scrollbar-thumb { background: var(--alm-line-2); }
-.rack { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
-.inst-card { position: relative; border: 1px solid var(--alm-line);
-  background: rgba(3, 8, 18, 0.55); backdrop-filter: blur(3px);
-  padding: 18px 16px 14px; cursor: pointer; transition: 0.22s; overflow: hidden; }
-.inst-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 2px;
-  background: var(--accent, var(--alm-cyan)); opacity: 0.55;
-  box-shadow: 0 0 12px var(--accent, var(--alm-cyan)); }
-.inst-card:hover { border-color: var(--accent, var(--alm-cyan)); transform: translateY(-2px);
-  box-shadow: 0 0 26px color-mix(in srgb, var(--accent, var(--alm-cyan)) 30%, transparent); }
-.inst-card .sys { font-size: 9px; letter-spacing: 0.3em; color: var(--accent, var(--alm-cyan));
-  text-shadow: 0 0 10px currentColor; }
-.inst-card .sys::before { content: "● "; animation: alm-tw 2s ease-in-out infinite; }
-.inst-card h3 { font-family: var(--alm-display); font-size: 16px; font-weight: 400;
-  color: var(--alm-hi); letter-spacing: 0.12em; margin: 8px 0 6px; text-shadow: var(--alm-glow-soft); }
-.inst-card .cls { font-size: 9px; color: var(--alm-dim); letter-spacing: 0.14em; }
-.inst-card .idx { position: absolute; top: 10px; right: 12px; font-size: 9px;
-  color: var(--alm-mag); text-shadow: 0 0 8px var(--alm-mag-glow); }
+/* ── index: THE GLOBE IS THE INDEX (entry contract, almanac-entry-B) ──── */
+/* hover a system row, the Earth answers — pips bloom on the central globe */
+.alm-col.index { width: 200px; gap: 14px; }
+.alm-col.index .row { cursor: pointer; padding: 7px 8px 8px 0; transition: all 0.2s;
+  border-bottom: 1px solid rgba(127, 217, 255, 0.07); }
+.alm-col.index .row .ix { color: var(--alm-dim); margin-right: 10px; }
+.alm-col.index .row .nm { font-family: var(--alm-display); font-weight: 300; font-size: 16px;
+  letter-spacing: 0.2em; color: var(--alm-dim); transition: all 0.2s; }
+.alm-col.index .row .ln { display: block; font-size: 8px; color: var(--alm-dim);
+  letter-spacing: 0.26em; margin-top: 3px; opacity: 0.7;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.alm-col.index .row.on .nm, .alm-col.index .row:hover .nm { color: var(--alm-hi);
+  text-shadow: 0 0 16px rgba(127, 217, 255, 0.55); }
+.alm-col.index .row.on { border-bottom-color: rgba(127, 217, 255, 0.45); }
+.alm-col.index .row.on .ix { color: var(--alm-cyan); text-shadow: 0 0 8px rgba(127, 217, 255, 0.5); }
+.alm-col.index .row.wait { cursor: default; opacity: 0.45; }
+.alm-col.index .row .dot { color: var(--alm-mag); text-shadow: 0 0 8px var(--alm-mag);
+  animation: alm-tw 2.2s infinite; font-size: 8px; margin-left: 8px; }
 
 /* ── readout block (page content, below-fold style) ──────────────────── */
 #alm-readout { position: fixed; left: 50%; transform: translateX(-50%); bottom: 52px; z-index: 9;

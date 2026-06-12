@@ -23,6 +23,10 @@ export interface HoloMark {
   color?: string;
 }
 
+/** Rotation lives at module scope so the Earth keeps turning across remounts —
+ *  the index swaps the focused instrument's canvas without the globe snapping back. */
+let ROT = 0;
+
 let COAST: number[][][] | null = null;
 function coastlines(): number[][][] {
   if (COAST) return COAST;
@@ -57,7 +61,7 @@ export function HoloCanvas({ pips = [], marks = [], spin = 0.05 }: HoloCanvasPro
     let W = 0,
       H = 0,
       R = 0,
-      rot = 0,
+      pipA = 0, // pip bloom: eases 0 → 1 on mount (contract: hover a row, the Earth answers)
       alive = true;
     const fit = () => {
       W = c.width = innerWidth * 2;
@@ -71,7 +75,7 @@ export function HoloCanvas({ pips = [], marks = [], spin = 0.05 }: HoloCanvasPro
     const cx = () => W / 2;
     const cy = () => (H / 2) * 1.08;
     const proj = (lon: number, lat: number): [number, number, number] | null => {
-      const l = ((lon + rot) * Math.PI) / 180;
+      const l = ((lon + ROT) * Math.PI) / 180;
       const p = (lat * Math.PI) / 180;
       const x = Math.cos(p) * Math.sin(l);
       const y = Math.sin(p);
@@ -82,7 +86,7 @@ export function HoloCanvas({ pips = [], marks = [], spin = 0.05 }: HoloCanvasPro
     const draw = () => {
       if (!alive) return;
       X.clearRect(0, 0, W, H);
-      rot += spin;
+      ROT += spin;
       const t = Date.now();
       // atmosphere bloom halos (contract constants)
       for (const [r, o] of [
@@ -206,17 +210,20 @@ export function HoloCanvas({ pips = [], marks = [], spin = 0.05 }: HoloCanvasPro
       X.beginPath();
       X.arc(cx(), cy(), R, 0, 7);
       X.stroke();
-      // data pips (the only thing on the planet)
+      // data pips (the only thing on the planet) — bloom in via pipA easing
+      pipA += (1 - pipA) * 0.06;
       for (const q of propsRef.current.pips) {
         const pp = proj(q.lon, q.lat);
         if (!pp) continue;
-        const s = (3 + q.size * 1.8) * (1 + 0.25 * Math.sin(t / 280 + q.lon));
+        const s = (3 + q.size * 1.8) * (1 + 0.25 * Math.sin(t / 280 + q.lon)) * pipA;
         X.fillStyle = q.color;
         X.shadowColor = q.color;
         X.shadowBlur = 16;
+        X.globalAlpha = pipA;
         X.beginPath();
         X.arc(pp[0], pp[1], s, 0, 7);
         X.fill();
+        X.globalAlpha = 1;
         X.shadowBlur = 0;
       }
       requestAnimationFrame(draw);

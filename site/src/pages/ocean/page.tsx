@@ -158,6 +158,30 @@ function RightCol() {
   );
 }
 
+/** Globe-index preview — the entry contract's 3 ocean cells. */
+function Preview() {
+  const state = useFeed(feed);
+  const d = state?.data ?? (snapshot as OceanData);
+  const battery = d.flagships.find((f) => f.id === PRIMARY);
+  return (
+    <>
+      <div className="cell">
+        <span className="k">battery ny</span>
+        <span className="v g">{battery ? battery.level.toFixed(2) : "—"}<span className="u"> M MLLW</span></span>
+      </div>
+      <div className="rule" />
+      <div className="cell">
+        <span className="k">next high</span>
+        <span className="v">{d.nextHigh ? d.nextHigh.v.toFixed(2) : "—"}
+          <span className="u"> M{d.nextHigh ? ` · ${hhmm(d.nextHigh.t).slice(0, 5)}` : ""}</span>
+        </span>
+      </div>
+      <div className="rule" />
+      <div className="cell"><span className="k">stations</span><span className="v">{d.stations.length}</span></div>
+    </>
+  );
+}
+
 const page: AlmanacPage<OceanData> = {
   meta: {
     id: "ocean",
@@ -169,6 +193,7 @@ const page: AlmanacPage<OceanData> = {
   Canvas: OceanCanvas,
   feed,
   readouts: { left: LeftCol, right: RightCol },
+  preview: Preview,
 };
 
 export default page;
