@@ -137,7 +137,7 @@ function IndexView({ registry, upcoming = [] }: { registry: Registry; upcoming?:
             onClick={() => (window.location.hash = `#/page/${p.meta.id}`)}
           >
             <span className="ix">{pad(i + 1)}</span>
-            <span className="nm">{p.meta.system.toUpperCase()}</span>
+            <span className="nm">{p.meta.index ?? p.meta.system.toUpperCase()}</span>
             <span className="dot">●</span>
             <span className="ln">{p.meta.classification}</span>
           </div>

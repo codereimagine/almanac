@@ -37,6 +37,8 @@ export interface PageMeta {
   classification: string;
   /** index ordering (lower first) */
   order?: number;
+  /** index row display name — defaults to the system name (e.g. "STARS · PLANETS") */
+  index?: string;
   /** accent override — defaults to the system's token */
   accent?: string;
 }
