@@ -72,6 +72,8 @@ const cMain = (t: number): string => `${t.toFixed(1)}°C`;
 const fAlt = (t: number): string => `${(t * 1.8 + 32).toFixed(1)}°F`;
 // both scales, co-equal — °C · °F (slightly smaller font via the .dual class to fit the column)
 const dual = (t: number): string => `${cMain(t)} · ${fAlt(t)}`;
+// wind in both metric and imperial, same co-equal treatment
+const windDual = (kmh: number): string => `${kmh.toFixed(0)} KM/H · ${(kmh * 0.621371).toFixed(0)} MPH`;
 
 /** WMO weather code → HUD condition word (bewthr's code buckets). */
 const WMO: Record<number, string> = {
@@ -181,7 +183,7 @@ function RightCol() {
     <>
       <div className="cell">
         <span className="k">max wind</span>
-        <span className="v g">{windy ? windy.wind.toFixed(0) : "—"}<span className="u"> KM/H</span></span>
+        <span className="v g dual">{windy ? windDual(windy.wind) : "—"}</span>
         <span className="u">{windy ? windy.name : ""}</span>
       </div>
       <div className="rule" />
@@ -212,7 +214,7 @@ function Preview() {
       <div className="rule" />
       <div className="cell">
         <span className="k">max wind</span>
-        <span className="v g">{windy ? windy.wind.toFixed(0) : "—"}<span className="u"> KM/H</span></span>
+        <span className="v g dual">{windy ? windDual(windy.wind) : "—"}</span>
       </div>
       <div className="rule" />
       <div className="cell"><span className="k">cities</span><span className="v">{d.cities.length}</span></div>
@@ -260,8 +262,8 @@ const page: AlmanacPage<WxData> = {
         { k: "feels", v: dual(feels), u: `RH ${(c.relative_humidity_2m ?? 0).toFixed(0)}%` },
         {
           k: "wind",
-          v: (c.wind_speed_10m ?? 0).toFixed(0),
-          u: `KM/H${precip > 0 ? ` · PRECIP ${precip.toFixed(1)} MM` : ""}`,
+          v: windDual(c.wind_speed_10m ?? 0),
+          u: precip > 0 ? `PRECIP ${precip.toFixed(1)} MM` : undefined,
         },
       ];
     } catch {
