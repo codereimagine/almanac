@@ -202,3 +202,47 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
   color: var(--alm-dim); letter-spacing: 0.06em; }
 #alm-readout b { color: var(--alm-cyan); font-weight: 500; }
 #alm-readout .num { color: var(--alm-hi); text-shadow: var(--alm-glow-soft); }
+
+/* ════════════════════════════════════════════════════════════════════════
+   PHONE — additive only. Desktop & tablet (>640px) NEVER enter this block, so
+   their layout is byte-identical (gate-proven via computed-style baseline). The
+   globe canvas already scales to any viewport (R = min(W,H)*0.3); the only thing
+   that overlaps on a narrow phone is the fixed-px edge telemetry rails. Here the
+   two columns relocate into a bottom HUD tray (side by side, each scrollable,
+   translucent) and the globe stays the full-screen hero above them.
+   ════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  /* title fits the narrow width */
+  #alm-title { top: 18px; }
+  #alm-title h1 { font-size: 21px; letter-spacing: 0.34em; }
+  #alm-title .s { letter-spacing: 0.4em; }
+
+  /* search clears the screen edges (its ⌕/✕ glyphs sit ±20px outside the box) */
+  #alm-search { width: min(300px, calc(100vw - 64px)); }
+
+  /* the two edge rails → a bottom HUD tray, side by side, each scrollable.
+     The globe stays the hero above; the tray is translucent so it shows through. */
+  .alm-col {
+    top: auto; bottom: 56px; width: calc(50vw - 10px);
+    max-height: 38vh; overflow-y: auto; overflow-x: hidden;
+    background: linear-gradient(0deg, rgba(1, 3, 10, 0.82), rgba(1, 3, 10, 0.42));
+    -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+    border-top: 1px solid var(--alm-line-2); padding-top: 10px;
+    scrollbar-width: none;
+  }
+  .alm-col::-webkit-scrollbar { display: none; }
+  .alm-col.left { left: 6px; right: auto; border-left: 0; padding-left: 8px; }
+  .alm-col.right { right: 6px; left: auto; border-right: 0; padding-right: 8px; }
+  .alm-col.index { width: calc(50vw - 10px); }
+
+  /* tray-internal type a touch smaller so values never clip a half-width column */
+  .alm-col .cell .v { font-size: 18px; }
+  .alm-col .cell .v.dual { font-size: 13px; }
+  .alm-col.index .row .nm { font-size: 14px; }
+  .drow .dl b { font-size: 12px; }
+
+  /* bottom strip: tighter so the index catalog line fits one row */
+  #alm-strip { gap: 14px; bottom: 18px; font-size: 8px; letter-spacing: 0.18em; }
+  /* fault chrome rides just above the tray */
+  #alm-fault { bottom: 56px; gap: 16px; font-size: 9px; }
+}
