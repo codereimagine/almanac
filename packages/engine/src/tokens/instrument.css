@@ -222,13 +222,18 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
 
   /* the two edge rails → a bottom HUD tray, side by side, each scrollable.
      The globe stays the hero above; the tray is translucent so it shows through. */
+  /* ONE solid control deck across the full width — the globe rises out of it, and the
+     columns print ON the deck, never on the map. Full-width => no seam/gap can show the
+     globe between the two columns. The globe's lower edge tucks behind it. */
+  body::before {
+    content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: 42vh;
+    background: rgba(2, 5, 12, 0.97); border-top: 1px solid var(--alm-line-2);
+    box-shadow: 0 -14px 30px -12px rgba(0, 0, 0, 0.85); z-index: 8;
+  }
   .alm-col {
-    top: auto; bottom: 56px; width: calc(50vw - 10px);
-    max-height: 38vh; overflow-y: auto; overflow-x: hidden;
-    background: linear-gradient(0deg, rgba(1, 3, 10, 0.82), rgba(1, 3, 10, 0.42));
-    -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
-    border-top: 1px solid var(--alm-line-2); padding-top: 10px;
-    scrollbar-width: none;
+    top: auto; bottom: calc(54px + env(safe-area-inset-bottom)); width: calc(50vw - 10px);
+    max-height: 30vh; overflow-y: auto; overflow-x: hidden;
+    background: transparent; padding-top: 10px; scrollbar-width: none;
   }
   .alm-col::-webkit-scrollbar { display: none; }
   .alm-col.left { left: 6px; right: auto; border-left: 0; padding-left: 8px; }
@@ -242,7 +247,7 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
   .drow .dl b { font-size: 12px; }
 
   /* bottom strip: tighter so the index catalog line fits one row */
-  #alm-strip { gap: 14px; bottom: 18px; font-size: 8px; letter-spacing: 0.18em; }
+  #alm-strip { gap: 14px; bottom: calc(14px + env(safe-area-inset-bottom)); font-size: 8px; letter-spacing: 0.18em; }
   /* fault chrome rides just above the tray */
-  #alm-fault { bottom: 56px; gap: 16px; font-size: 9px; }
+  #alm-fault { bottom: calc(56px + env(safe-area-inset-bottom)); gap: 16px; font-size: 9px; }
 }
