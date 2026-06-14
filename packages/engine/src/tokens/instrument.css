@@ -227,8 +227,8 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
      globe between the two columns. The globe's lower edge tucks behind it. */
   body::before {
     content: ""; position: fixed; left: 0; right: 0; bottom: 0; height: 42vh;
-    background: rgba(2, 5, 12, 0.97); border-top: 1px solid var(--alm-line-2);
-    box-shadow: 0 -14px 30px -12px rgba(0, 0, 0, 0.85); z-index: 8;
+    background: var(--alm-void); border-top: 1px solid var(--alm-line-2);
+    box-shadow: 0 -14px 30px -12px rgba(0, 0, 0, 0.95); z-index: 8;
   }
   .alm-col {
     top: auto; bottom: calc(54px + env(safe-area-inset-bottom)); width: calc(50vw - 10px);
