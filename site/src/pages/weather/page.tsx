@@ -5,16 +5,7 @@
 // three hottest longitudes.
 
 import type { AlmanacPage, CanvasProps, DataFeed } from "@almanac/engine";
-import {
-  fmtTemp,
-  haversineKm,
-  HoloCanvas,
-  toggleTempUnit,
-  useFeed,
-  useTempUnit,
-  type HoloMark,
-  type HoloPip,
-} from "@almanac/engine";
+import { haversineKm, HoloCanvas, useFeed, type HoloMark, type HoloPip } from "@almanac/engine";
 import { useEffect, useState } from "react";
 import citiesTable from "./cities.json";
 import snapshot from "./snapshot.json";
@@ -76,19 +67,11 @@ const feed: DataFeed<WxData> = {
 };
 
 const byTemp = (d: WxData): CityWx[] => [...d.cities].sort((a, b) => b.temp - a.temp);
-// temps are stored in °C; fmtTemp renders the active unit (probe reads the live unit)
-const deg = (t: number): string => fmtTemp(t);
-
-/** °C/°F segmented toggle — rendered over the weather instrument, persists globally. */
-function UnitToggle() {
-  const unit = useTempUnit();
-  return (
-    <div id="alm-units" onClick={toggleTempUnit} title="toggle temperature unit">
-      <span className={unit === "C" ? "on" : ""}>°C</span>
-      <span className={unit === "F" ? "on" : ""}>°F</span>
-    </div>
-  );
-}
+// temps are stored in °C — a research almanac shows BOTH scales at once.
+const cMain = (t: number): string => `${t.toFixed(1)}°C`;
+const fAlt = (t: number): string => `${(t * 1.8 + 32).toFixed(1)}°F`;
+// both scales, co-equal — °C · °F (slightly smaller font via the .dual class to fit the column)
+const dual = (t: number): string => `${cMain(t)} · ${fAlt(t)}`;
 
 /** WMO weather code → HUD condition word (bewthr's code buckets). */
 const WMO: Record<number, string> = {
@@ -157,17 +140,11 @@ function WxCanvas(_props: CanvasProps) {
     });
     X.shadowBlur = 0;
   };
-  return (
-    <>
-      <HoloCanvas pips={pips} marks={marks} overlay={overlay} />
-      <UnitToggle />
-    </>
-  );
+  return <HoloCanvas pips={pips} marks={marks} overlay={overlay} />;
 }
 
 function LeftCol() {
   const state = useFeed(feed);
-  useTempUnit(); // reformat on unit toggle
   const [utc, setUtc] = useState("--:--:--");
   useEffect(() => {
     const t = setInterval(() => setUtc(new Date().toISOString().slice(11, 19)), 1000);
@@ -183,12 +160,12 @@ function LeftCol() {
       <div className="rule" />
       <div className="cell">
         <span className="k">hottest</span>
-        <span className="v m">{hot ? deg(hot.temp) : "—"}</span>
+        <span className="v m dual">{hot ? dual(hot.temp) : "—"}</span>
         <span className="u">{hot ? hot.name : ""}</span>
       </div>
       <div className="cell">
         <span className="k">coldest</span>
-        <span className="v">{cold ? deg(cold.temp) : "—"}</span>
+        <span className="v dual">{cold ? dual(cold.temp) : "—"}</span>
         <span className="u">{cold ? cold.name : ""}</span>
       </div>
     </>
@@ -197,7 +174,6 @@ function LeftCol() {
 
 function RightCol() {
   const state = useFeed(feed);
-  useTempUnit(); // reformat on unit toggle
   const d = state?.data ?? (snapshot as WxData);
   const windy = [...d.cities].sort((a, b) => b.wind - a.wind)[0];
   const mean = d.cities.length ? d.cities.reduce((s, c) => s + c.temp, 0) / d.cities.length : 0;
@@ -209,7 +185,10 @@ function RightCol() {
         <span className="u">{windy ? windy.name : ""}</span>
       </div>
       <div className="rule" />
-      <div className="cell"><span className="k">grid mean</span><span className="v">{deg(mean)}</span></div>
+      <div className="cell">
+        <span className="k">grid mean</span>
+        <span className="v dual">{dual(mean)}</span>
+      </div>
       <div className="cell"><span className="k">cities</span><span className="v">{d.cities.length}</span></div>
       <div className="rule" />
       <div className="cell"><span className="k">source</span><span className="v">OPEN-METEO</span></div>
@@ -220,7 +199,6 @@ function RightCol() {
 /** Globe-index preview — the entry contract's 3 weather cells. */
 function Preview() {
   const state = useFeed(feed);
-  useTempUnit(); // reformat on unit toggle
   const d = state?.data ?? (snapshot as WxData);
   const sorted = byTemp(d);
   const hot = sorted[0];
@@ -229,7 +207,7 @@ function Preview() {
     <>
       <div className="cell">
         <span className="k">hottest</span>
-        <span className="v m">{hot ? deg(hot.temp) : "—"}</span>
+        <span className="v m dual">{hot ? dual(hot.temp) : "—"}</span>
       </div>
       <div className="rule" />
       <div className="cell">
@@ -276,13 +254,10 @@ const page: AlmanacPage<WxData> = {
       const c = e.current;
       if (c?.temperature_2m == null) throw new Error("no point data");
       const precip = c.precipitation ?? 0;
+      const feels = c.apparent_temperature ?? c.temperature_2m;
       return [
-        { k: "now", v: deg(c.temperature_2m), cls: c.temperature_2m >= 32 ? "m" : "g", u: wmoWord(c.weather_code ?? 0) },
-        {
-          k: "feels",
-          v: deg(c.apparent_temperature ?? c.temperature_2m),
-          u: `RH ${(c.relative_humidity_2m ?? 0).toFixed(0)}%`,
-        },
+        { k: "now", v: dual(c.temperature_2m), cls: c.temperature_2m >= 32 ? "m" : "g", u: wmoWord(c.weather_code ?? 0) },
+        { k: "feels", v: dual(feels), u: `RH ${(c.relative_humidity_2m ?? 0).toFixed(0)}%` },
         {
           k: "wind",
           v: (c.wind_speed_10m ?? 0).toFixed(0),
@@ -299,9 +274,7 @@ const page: AlmanacPage<WxData> = {
           b = c;
         }
       }
-      return b
-        ? [{ k: "grid fallback", v: deg(b.temp), cls: "g", u: `${b.name.slice(0, 12)} GRID · ${bd.toFixed(0)} KM` }]
-        : [];
+      return b ? [{ k: "grid fallback", v: dual(b.temp), cls: "g", u: `${b.name.slice(0, 12)} GRID` }] : [];
     }
   },
 };

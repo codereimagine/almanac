@@ -17,7 +17,6 @@ import { runProbe } from "../probes";
 import type { Registry } from "../registry/registry";
 import type { AlmanacPage, ProbeCell } from "../schema/page";
 import { SYSTEM_ACCENT } from "../tokens";
-import { useTempUnit } from "../units";
 import { geocodeSearch } from "./geocode";
 import { Tape } from "./Tape";
 
@@ -173,7 +172,6 @@ function FocusedCanvas({ page }: { page: AlmanacPage }) {
  *  its probe failing, timing out, or being slow affects only this row. */
 function DossierRow({ page, place }: { page: AlmanacPage; place: GazetteerEntry }) {
   const feed = useFeed(page.feed);
-  const unit = useTempUnit(); // re-run probes when the temperature unit toggles
   const [cells, setCells] = useState<ProbeCell[] | null | undefined>(undefined);
   const data = feed?.data ?? page.feed?.snapshot;
   useEffect(() => {
@@ -190,7 +188,7 @@ function DossierRow({ page, place }: { page: AlmanacPage; place: GazetteerEntry 
       clearInterval(t);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page.meta.id, place.lat, place.lon, place.tz, feed?.asOf, unit]);
+  }, [page.meta.id, place.lat, place.lon, place.tz, feed?.asOf]);
   return (
     <div className="drow" onClick={() => (window.location.hash = `#/page/${page.meta.id}`)}>
       <span className="dk" style={{ color: page.meta.accent ?? SYSTEM_ACCENT[page.meta.system] }}>
