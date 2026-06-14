@@ -18,7 +18,9 @@ import type { Registry } from "../registry/registry";
 import type { AlmanacPage, ProbeCell } from "../schema/page";
 import { SYSTEM_ACCENT } from "../tokens";
 import { geocodeSearch } from "./geocode";
+import { MobileShell } from "./MobileShell";
 import { Tape } from "./Tape";
+import { useMediaQuery } from "./useMediaQuery";
 
 /** A searchable place — local gazetteer entries and live-geocoded cities alike. */
 export interface GazetteerEntry {
@@ -475,8 +477,11 @@ export function Shell({
   gazetteer?: GazetteerEntry[];
 }) {
   const route = useRoute();
+  const isMobile = useMediaQuery("(max-width: 640px)");
   const pageId = route.startsWith("/page/") ? route.slice(6) : null;
   const page = pageId ? registry.byId.get(pageId) : null;
+  // PHONE: a separate, purpose-built shell. DESKTOP path below is untouched.
+  if (isMobile) return <MobileShell registry={registry} upcoming={upcoming} gazetteer={gazetteer} />;
   return (
     <>
       <Starfield />

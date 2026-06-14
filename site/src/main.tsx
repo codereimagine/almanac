@@ -20,3 +20,10 @@ const gazetteer = [...(countriesGaz as [string, number, number][]), ...(citiesGa
 
 // full catalog uplinked — no AWAITING rows left on the globe-index
 createRoot(document.getElementById("root")!).render(<Shell registry={registry} gazetteer={gazetteer} />);
+
+// PWA: install the offline app shell. Live data APIs are cross-origin and stay network-only.
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    void navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}

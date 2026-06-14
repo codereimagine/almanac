@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#01030a"/>
+  <!-- bezel ring -->
+  <circle cx="256" cy="256" r="186" fill="none" stroke="#7fd9ff" stroke-opacity="0.28" stroke-width="3"/>
+  <!-- globe glow -->
+  <circle cx="256" cy="256" r="150" fill="#06121f"/>
+  <!-- graticule -->
+  <g fill="none" stroke="#7fd9ff" stroke-width="5" stroke-opacity="0.9">
+    <circle cx="256" cy="256" r="150"/>
+    <ellipse cx="256" cy="256" rx="150" ry="62"/>
+    <ellipse cx="256" cy="256" rx="62" ry="150"/>
+    <line x1="106" y1="256" x2="406" y2="256"/>
+  </g>
+  <!-- data pips -->
+  <circle cx="322" cy="196" r="13" fill="#ff2bd6"/>
+  <circle cx="196" cy="312" r="10" fill="#f0ce96"/>
+</svg>

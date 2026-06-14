@@ -6,7 +6,7 @@
  * → data pips. Nothing else — pixel fidelity by construction.
  */
 
-import { useEffect, useRef } from "react";
+import { createContext, useContext, useEffect, useRef } from "react";
 import { feature, mesh } from "topojson-client";
 import type { GeometryCollection, Topology } from "topojson-specification";
 import countries110 from "world-atlas/countries-110m.json";
@@ -23,6 +23,11 @@ export interface HoloMark {
   deg: number;
   color?: string;
 }
+
+/** When true, every HoloCanvas underneath sizes to its parent box instead of the window.
+ *  The mobile shell provides `true`; desktop has no provider, so it stays full-window
+ *  (the contract path, byte-identical). Pages render <HoloCanvas> unaware of either mode. */
+export const HoloFitContext = createContext(false);
 
 /** Rotation lives at module scope so the Earth keeps turning across remounts —
  *  the index swaps the focused instrument's canvas without the globe snapping back. */
@@ -80,10 +85,15 @@ export interface HoloCanvasProps {
   spin?: number;
   /** per-frame instrument layer, drawn over the pips in globe space (wind flow, currents…) */
   overlay?: (X: CanvasRenderingContext2D, proj: HoloProject, tMs: number) => void;
+  /** Size to the parent element's box instead of the window. Used ONLY by the mobile
+   *  shell so the globe is fully visible in its own framed box; desktop omits this and
+   *  keeps the exact full-window path (byte-identical). */
+  containerFit?: boolean;
 }
 
-export function HoloCanvas({ pips = [], marks = [], spin = 0.05, overlay }: HoloCanvasProps) {
+export function HoloCanvas({ pips = [], marks = [], spin = 0.05, overlay, containerFit = false }: HoloCanvasProps) {
   const ref = useRef<HTMLCanvasElement>(null);
+  const useContainer = containerFit || useContext(HoloFitContext);
   const propsRef = useRef({ pips, marks, overlay });
   propsRef.current = { pips, marks, overlay };
 
@@ -96,14 +106,24 @@ export function HoloCanvas({ pips = [], marks = [], spin = 0.05, overlay }: Holo
       pipA = 0, // pip bloom: eases 0 → 1 on mount (contract: hover a row, the Earth answers)
       alive = true;
     const fit = () => {
-      W = c.width = innerWidth * 2;
-      H = c.height = innerHeight * 2;
+      // window path (desktop, default) is unchanged; container path sizes to the parent box
+      const p = c.parentElement;
+      const cw = useContainer && p ? p.clientWidth : innerWidth;
+      const ch = useContainer && p ? p.clientHeight : innerHeight;
+      W = c.width = cw * 2;
+      H = c.height = ch * 2;
       R = Math.min(W, H) * 0.3;
-      c.style.width = innerWidth + "px";
-      c.style.height = innerHeight + "px";
+      c.style.width = cw + "px";
+      c.style.height = ch + "px";
     };
     fit();
-    window.addEventListener("resize", fit);
+    let ro: ResizeObserver | null = null;
+    if (useContainer && c.parentElement) {
+      ro = new ResizeObserver(fit);
+      ro.observe(c.parentElement);
+    } else {
+      window.addEventListener("resize", fit);
+    }
     // click the planet: pointer pair with drag rejection, then unproject
     const down = { x: 0, y: 0, t: 0 };
     const onDown = (e: PointerEvent) => {
@@ -317,12 +337,13 @@ export function HoloCanvas({ pips = [], marks = [], spin = 0.05, overlay }: Holo
     draw();
     return () => {
       alive = false;
-      window.removeEventListener("resize", fit);
+      if (ro) ro.disconnect();
+      else window.removeEventListener("resize", fit);
       c.removeEventListener("pointerdown", onDown);
       c.removeEventListener("pointerup", onUp);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spin]);
+  }, [spin, useContainer]);
 
   return <canvas ref={ref} style={{ position: "absolute", inset: 0 }} />;
 }
