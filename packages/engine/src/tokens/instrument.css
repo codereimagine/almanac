@@ -185,6 +185,16 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
 .drow .dl b.m { color: var(--alm-mag); text-shadow: 0 0 10px var(--alm-mag-glow); }
 .drow .dl i { font-style: normal; font-size: 7.5px; color: var(--alm-dim); letter-spacing: 0.2em; }
 
+/* ── unit toggle (°C / °F) — bottom-left, persists globally ───────────── */
+#alm-units { position: fixed; left: 34px; bottom: 52px; z-index: 11;
+  display: flex; border: 1px solid var(--alm-line-2); cursor: pointer;
+  font-size: 9px; letter-spacing: 0.2em; user-select: none;
+  animation: alm-in 0.28s ease both; }
+#alm-units span { padding: 4px 9px; color: var(--alm-dim); transition: 0.18s; }
+#alm-units span.on { color: var(--alm-void); background: var(--alm-cyan);
+  text-shadow: none; box-shadow: 0 0 12px rgba(127, 217, 255, 0.5); }
+#alm-units:hover span:not(.on) { color: var(--alm-txt); }
+
 /* instrument fault — the boundary chrome (a plugin crash never blanks the shell) */
 #alm-fault { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%);
   z-index: 12; display: flex; gap: 30px; font-size: 10px; letter-spacing: 0.3em;

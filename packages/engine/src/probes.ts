@@ -14,6 +14,12 @@ const CACHE = new Map<string, { at: number; cells: ProbeCell[] }>();
 const TTL = 60_000;
 const TIMEOUT = 8_000;
 
+/** Drop all cached async probe results — called when a display preference
+ *  (e.g. temperature unit) changes so the dossier reformats immediately. */
+export function clearProbeCache(): void {
+  CACHE.clear();
+}
+
 function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
   return new Promise((res, rej) => {
     const t = setTimeout(() => rej(new Error("probe timeout")), ms);

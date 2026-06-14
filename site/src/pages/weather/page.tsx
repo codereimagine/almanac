@@ -5,7 +5,16 @@
 // three hottest longitudes.
 
 import type { AlmanacPage, CanvasProps, DataFeed } from "@almanac/engine";
-import { haversineKm, HoloCanvas, useFeed, type HoloMark, type HoloPip } from "@almanac/engine";
+import {
+  fmtTemp,
+  haversineKm,
+  HoloCanvas,
+  toggleTempUnit,
+  useFeed,
+  useTempUnit,
+  type HoloMark,
+  type HoloPip,
+} from "@almanac/engine";
 import { useEffect, useState } from "react";
 import citiesTable from "./cities.json";
 import snapshot from "./snapshot.json";
@@ -67,7 +76,19 @@ const feed: DataFeed<WxData> = {
 };
 
 const byTemp = (d: WxData): CityWx[] => [...d.cities].sort((a, b) => b.temp - a.temp);
-const deg = (t: number): string => `${t.toFixed(1)}°C`;
+// temps are stored in °C; fmtTemp renders the active unit (probe reads the live unit)
+const deg = (t: number): string => fmtTemp(t);
+
+/** °C/°F segmented toggle — rendered over the weather instrument, persists globally. */
+function UnitToggle() {
+  const unit = useTempUnit();
+  return (
+    <div id="alm-units" onClick={toggleTempUnit} title="toggle temperature unit">
+      <span className={unit === "C" ? "on" : ""}>°C</span>
+      <span className={unit === "F" ? "on" : ""}>°F</span>
+    </div>
+  );
+}
 
 /** WMO weather code → HUD condition word (bewthr's code buckets). */
 const WMO: Record<number, string> = {
@@ -136,11 +157,17 @@ function WxCanvas(_props: CanvasProps) {
     });
     X.shadowBlur = 0;
   };
-  return <HoloCanvas pips={pips} marks={marks} overlay={overlay} />;
+  return (
+    <>
+      <HoloCanvas pips={pips} marks={marks} overlay={overlay} />
+      <UnitToggle />
+    </>
+  );
 }
 
 function LeftCol() {
   const state = useFeed(feed);
+  useTempUnit(); // reformat on unit toggle
   const [utc, setUtc] = useState("--:--:--");
   useEffect(() => {
     const t = setInterval(() => setUtc(new Date().toISOString().slice(11, 19)), 1000);
@@ -170,6 +197,7 @@ function LeftCol() {
 
 function RightCol() {
   const state = useFeed(feed);
+  useTempUnit(); // reformat on unit toggle
   const d = state?.data ?? (snapshot as WxData);
   const windy = [...d.cities].sort((a, b) => b.wind - a.wind)[0];
   const mean = d.cities.length ? d.cities.reduce((s, c) => s + c.temp, 0) / d.cities.length : 0;
@@ -192,6 +220,7 @@ function RightCol() {
 /** Globe-index preview — the entry contract's 3 weather cells. */
 function Preview() {
   const state = useFeed(feed);
+  useTempUnit(); // reformat on unit toggle
   const d = state?.data ?? (snapshot as WxData);
   const sorted = byTemp(d);
   const hot = sorted[0];
