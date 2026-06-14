@@ -10,7 +10,7 @@
  */
 
 import { Component, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
-import { setHoloPickHandler, setHoloTarget } from "../canvas/HoloCanvas";
+import { HoloAccentContext, setHoloPickHandler, setHoloTarget } from "../canvas/HoloCanvas";
 import { useFeed } from "../feeds/feed";
 import { haversineKm } from "../geo";
 import { runProbe } from "../probes";
@@ -18,9 +18,7 @@ import type { Registry } from "../registry/registry";
 import type { AlmanacPage, ProbeCell } from "../schema/page";
 import { SYSTEM_ACCENT } from "../tokens";
 import { geocodeSearch } from "./geocode";
-import { MobileShell } from "./MobileShell";
 import { Tape } from "./Tape";
-import { useMediaQuery } from "./useMediaQuery";
 
 /** A searchable place — local gazetteer entries and live-geocoded cities alike. */
 export interface GazetteerEntry {
@@ -379,13 +377,23 @@ function IndexView({
           )}
         </div>
       )}
-      {/* the globe IS the index — remount per focus so the pips bloom in */}
-      <div id="alm-stage">{page && <FocusedCanvas key={page.meta.id} page={page} />}</div>
+      {/* the globe IS the index — remount per focus so the pips bloom in; the activity pips
+          take the focused instrument's color (matching its flashing dot) */}
+      <div id="alm-stage">
+        {page && (
+          <HoloAccentContext.Provider value={page.meta.accent ?? SYSTEM_ACCENT[page.meta.system]}>
+            <FocusedCanvas key={page.meta.id} page={page} />
+          </HoloAccentContext.Provider>
+        )}
+      </div>
+      {/* desktop: display:contents (no-op, byte-identical). mobile: a swipeable bottom strip. */}
+      <div className="alm-rail">
       <div className="alm-col left index">
         {registry.pages.map((p, i) => (
           <div
             key={p.meta.id}
             className={`row${i === focus ? " on" : ""}${i >= booted ? " boot" : ""}${i === going ? " go" : ""}`}
+            style={{ "--acc": p.meta.accent ?? SYSTEM_ACCENT[p.meta.system] } as React.CSSProperties}
             onMouseEnter={() => {
               auto.current = false;
               setFocus(i);
@@ -416,6 +424,7 @@ function IndexView({
       ) : (
         page?.preview && <div className="alm-col right index">{render(page.preview)}</div>
       )}
+      </div>
       <div id="alm-strip">
         {upcoming.length > 0 ? (
           <span>
@@ -446,9 +455,18 @@ function PageView({ page, registry }: { page: AlmanacPage; registry: Registry })
     <>
       <Title sub={page.meta.classification} />
       <Tape label={`UTC ${utc}`} />
-      <div id="alm-stage">{Canvas && <Canvas live={feed?.live ?? false} />}</div>
-      {page.readouts?.left && <div className="alm-col left">{render(page.readouts.left)}</div>}
-      {page.readouts?.right && <div className="alm-col right">{render(page.readouts.right)}</div>}
+      <div id="alm-stage">
+        {Canvas && (
+          <HoloAccentContext.Provider value={page.meta.accent ?? SYSTEM_ACCENT[page.meta.system]}>
+            <Canvas live={feed?.live ?? false} />
+          </HoloAccentContext.Provider>
+        )}
+      </div>
+      {/* desktop: display:contents (no-op, byte-identical). mobile: a swipeable bottom strip. */}
+      <div className="alm-rail">
+        {page.readouts?.left && <div className="alm-col left">{render(page.readouts.left)}</div>}
+        {page.readouts?.right && <div className="alm-col right">{render(page.readouts.right)}</div>}
+      </div>
       {/* contract strip: ◂ PREV · ● LIVE/◈ SNAPSHOT · NEXT ▸ — nothing else on screen */}
       <div id="alm-strip">
         <span className="navlink" onClick={() => (window.location.hash = prev ? `#/page/${prev.meta.id}` : "#/")}>
@@ -477,11 +495,8 @@ export function Shell({
   gazetteer?: GazetteerEntry[];
 }) {
   const route = useRoute();
-  const isMobile = useMediaQuery("(max-width: 640px)");
   const pageId = route.startsWith("/page/") ? route.slice(6) : null;
   const page = pageId ? registry.byId.get(pageId) : null;
-  // PHONE: a separate, purpose-built shell. DESKTOP path below is untouched.
-  if (isMobile) return <MobileShell registry={registry} upcoming={upcoming} gazetteer={gazetteer} />;
   return (
     <>
       <Starfield />

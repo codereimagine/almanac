@@ -102,6 +102,10 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
 .alm-col .rule { height: 1px; align-self: stretch;
   background: linear-gradient(90deg, rgba(127, 217, 255, 0.4), transparent); }
 .alm-col.right .rule { background: linear-gradient(270deg, rgba(127, 217, 255, 0.4), transparent); }
+/* the rail wraps both telemetry columns. Desktop: display:contents = NO box of its own,
+   so the columns lay out EXACTLY as before (byte-identical). The phone @media at the
+   bottom of this file turns it into a swipeable strip. */
+.alm-rail { display: contents; }
 
 /* ── bottom strip: prev / live / next ────────────────────────────────── */
 #alm-strip { position: fixed; left: 50%; transform: translateX(-50%); bottom: 24px; z-index: 10;
@@ -132,7 +136,9 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
 .alm-col.index .row.on { border-bottom-color: rgba(127, 217, 255, 0.45); }
 .alm-col.index .row.on .ix { color: var(--alm-cyan); text-shadow: 0 0 8px rgba(127, 217, 255, 0.5); }
 .alm-col.index .row.wait { cursor: default; opacity: 0.45; }
-.alm-col.index .row .dot { color: var(--alm-mag); text-shadow: 0 0 8px var(--alm-mag);
+/* the flashing dot carries the instrument's color — it MATCHES the activity pips on the
+   globe, so swiping the strip shows the dot's color and the globe's data in that same color. */
+.alm-col.index .row .dot { color: var(--acc, var(--alm-mag)); text-shadow: 0 0 8px var(--acc, var(--alm-mag));
   animation: alm-tw 2.2s infinite; font-size: 8px; margin-left: 8px; }
 /* uplink boot — rows come online one by one on entry */
 .alm-col.index .row { transition: opacity 0.35s, border-bottom-color 0.2s; }
@@ -204,89 +210,57 @@ body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-in
 #alm-readout .num { color: var(--alm-hi); text-shadow: var(--alm-glow-soft); }
 
 /* ════════════════════════════════════════════════════════════════════════
-   MOBILE SHELL — the phone version (a SEPARATE component, MobileShell, that only
-   renders at ≤640px). A clean vertical stack: title · search → a CONTAINED globe
-   (fully visible in its own box) → a scrolling content panel. The desktop Shell
-   above is never rendered on a phone and is byte-identical (gate-proven). These
-   rules are scoped to #alm-m, which desktop never mounts.
+   PHONE — RELOCATION, NOT RESTYLE. Keep the EXACT desktop look: same globe
+   (untouched, centerpiece), same title/tape/search, same panel & readout item
+   styling, colors and type. The ONLY change: the two edge telemetry columns,
+   which overlap the globe as tall side rails on a narrow screen, are relocated
+   into ONE horizontal strip docked at the bottom that you SWIPE through, with no
+   visible scroll indicator. The globe reaches only ~72% down the screen, so the
+   strip sits below it and never overlaps. Desktop/tablet (>640px) never enter
+   this block; >640px renders byte-identically.
    ════════════════════════════════════════════════════════════════════════ */
-#alm-m {
-  position: fixed; inset: 0; z-index: 5; display: flex; flex-direction: column;
-  padding: calc(env(safe-area-inset-top) + 12px) 14px calc(env(safe-area-inset-bottom) + 8px);
-  overflow: hidden;
+@media (max-width: 640px) {
+  /* the rail: one swipeable horizontal strip pinned at the bottom, above the nav */
+  .alm-rail {
+    display: flex; flex-direction: row; align-items: flex-start; gap: 24px;
+    position: fixed; left: 0; right: 0; z-index: 10;
+    bottom: calc(56px + env(safe-area-inset-bottom));
+    padding: 8px 16px;
+    overflow-x: auto; overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;        /* Firefox */
+    -ms-overflow-style: none;     /* legacy Edge */
+    /* feather the swipe edges so items fade in/out instead of hard-cutting */
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 18px, #000 calc(100% - 18px), transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 18px, #000 calc(100% - 18px), transparent);
+  }
+  .alm-rail::-webkit-scrollbar { width: 0; height: 0; display: none; } /* WebKit/Blink: invisible */
+
+  /* the columns flatten away — their ITEMS become the swipe items, styling unchanged */
+  .alm-col, .alm-col.left, .alm-col.right, .alm-col.index { display: contents; }
+  .alm-rail .dstack { display: flex; flex-direction: row; gap: 24px; }
+
+  /* each item is a non-shrinking card in the strip (layout only — no color/type change) */
+  .alm-rail .row, .alm-rail .cell, .alm-rail .drow {
+    flex: 0 0 auto; scroll-snap-align: start; align-self: stretch;
+  }
+  .alm-rail .row { min-width: 150px; max-width: 210px; }
+  .alm-rail .row .ln { max-width: 200px; }
+  .alm-rail .cell { min-width: 116px; }
+  .alm-rail .drow { min-width: 150px; }
+  /* a horizontal rule makes no sense as a vertical sliver in the strip — drop it */
+  .alm-rail .rule { display: none; }
+
+  /* the bottom nav clears the strip; everything else (title/tape/search) untouched */
+  #alm-strip { bottom: calc(16px + env(safe-area-inset-bottom)); gap: 14px; font-size: 8px;
+    letter-spacing: 0.18em; max-width: 100vw; }
+  /* nudge the globe up a little so it sits balanced above the swipe strip (mobile only) */
+  #alm-stage { transform: translateY(-6vh); }
+  /* iOS auto-zooms into any input with font-size < 16px on focus. 16px stops that zoom
+     while keeping pinch-zoom available (no maximum-scale hack). Width/spacing keep the
+     placeholder fitting at the larger size. */
+  #alm-search { width: min(340px, 92vw); }
+  #alm-search input { font-size: 16px; letter-spacing: 0.08em; }
 }
-/* top — title, subtitle, search */
-.m-top { flex: 0 0 auto; text-align: center; position: relative; z-index: 6; }
-#alm-m-title { font-family: var(--alm-display); font-weight: 300; font-size: 26px;
-  letter-spacing: 0.42em; color: var(--alm-hi); text-shadow: var(--alm-glow-big); cursor: pointer; }
-#alm-m-title b { color: var(--alm-mag); font-weight: 300; text-shadow: 0 0 20px var(--alm-mag); }
-.m-sub { font-size: 8px; letter-spacing: 0.5em; color: var(--alm-dim); margin-top: 6px; }
-.m-search { position: relative; margin: 12px auto 0; width: min(320px, 84vw); }
-.m-search input { width: 100%; background: transparent; border: 0; border-bottom: 1px solid var(--alm-line-2);
-  color: var(--alm-hi); font-family: var(--alm-mono); font-size: 11px; letter-spacing: 0.24em;
-  text-align: center; padding: 7px 22px; outline: none; text-transform: uppercase; }
-.m-search input::placeholder { color: var(--alm-txt); opacity: 0.7; }
-.m-search input:focus { border-bottom-color: var(--alm-cyan); }
-.m-glyph { position: absolute; left: 2px; top: 7px; color: var(--alm-cyan); font-size: 14px; }
-.m-x { position: absolute; right: 2px; top: 7px; color: var(--alm-mag); font-size: 12px; cursor: pointer; }
-.m-hits { position: absolute; top: 100%; left: 0; right: 0; z-index: 7; max-height: 42vh; overflow-y: auto;
-  background: rgba(2, 6, 16, 0.97); border: 1px solid var(--alm-line); border-top: 0; }
-.m-hit { padding: 9px 12px; font-size: 10px; letter-spacing: 0.22em; color: var(--alm-txt);
-  text-align: left; cursor: pointer; border-bottom: 1px solid rgba(127, 217, 255, 0.06); }
-.m-hit:active { background: rgba(127, 217, 255, 0.08); }
-.m-rg { display: block; font-size: 8px; color: var(--alm-dim); letter-spacing: 0.18em; margin-top: 2px; }
-
-/* the contained globe — HoloFitContext sizes the canvas to this box, fully visible */
-.m-globe { flex: 0 0 auto; position: relative; width: 100%; height: 40vh; margin: 2px 0; }
-
-/* the content panel below the globe (scrolls) */
-.m-panel { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: none; }
-.m-panel::-webkit-scrollbar { display: none; }
-
-/* index — tappable instrument list */
-.m-list { display: flex; flex-direction: column; }
-.m-row { display: grid; grid-template-columns: auto 1fr auto; column-gap: 10px;
-  padding: 10px 6px; border-bottom: 1px solid rgba(127, 217, 255, 0.08); cursor: pointer; }
-.m-row.on { background: linear-gradient(90deg, rgba(127, 217, 255, 0.09), transparent); }
-.m-ix { grid-column: 1; grid-row: 1 / 3; align-self: center; color: var(--alm-dim); font-size: 10px; }
-.m-nm { grid-column: 2; grid-row: 1; font-family: var(--alm-display); font-weight: 300; font-size: 17px;
-  letter-spacing: 0.16em; color: var(--alm-txt); }
-.m-row.on .m-nm { color: var(--alm-hi); text-shadow: 0 0 14px rgba(127, 217, 255, 0.5); }
-.m-cl { grid-column: 2; grid-row: 2; font-size: 7.5px; letter-spacing: 0.2em; color: var(--alm-dim);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
-.m-go { grid-column: 3; grid-row: 1 / 3; align-self: center; color: var(--alm-dim); font-size: 13px; }
-.m-row.on .m-go { color: var(--alm-cyan); }
-
-/* index — target dossier */
-.m-dossier { display: flex; flex-direction: column; }
-.m-dhead { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 6px 10px; }
-.m-dt { font-family: var(--alm-display); font-size: 18px; color: var(--alm-mag); letter-spacing: 0.08em;
-  text-shadow: 0 0 12px var(--alm-mag-glow); }
-.m-dx { font-size: 9px; letter-spacing: 0.2em; color: var(--alm-dim); cursor: pointer; }
-.m-drow { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: baseline;
-  padding: 10px 6px; border-bottom: 1px solid rgba(127, 217, 255, 0.08); cursor: pointer; }
-.m-dk { font-size: 9px; letter-spacing: 0.26em; text-shadow: 0 0 10px currentColor; }
-.m-dv { display: flex; flex-wrap: wrap; gap: 4px 14px; }
-.m-dcell em { font-style: normal; font-size: 8px; color: var(--alm-dim); letter-spacing: 0.18em; }
-.m-dcell b { font-family: var(--alm-display); font-weight: 400; font-size: 14px; color: var(--alm-hi); letter-spacing: 0.04em; }
-.m-dcell b.g { color: var(--alm-gold); }
-.m-dcell b.m { color: var(--alm-mag); }
-.m-dcell i, .m-dv > i { font-style: normal; font-size: 8px; color: var(--alm-dim); letter-spacing: 0.18em; }
-
-/* page — readouts (reusing the page .cell/.k/.v markup) + nav */
-.m-read { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; padding: 6px 4px 14px; }
-.m-col { display: flex; flex-direction: column; gap: 14px; }
-.m-col .cell .k { color: var(--alm-dim); font-size: 9px; letter-spacing: 0.2em; }
-.m-col .cell .v { display: block; font-family: var(--alm-display); font-weight: 300; font-size: 21px;
-  color: var(--alm-hi); margin-top: 3px; font-variant-numeric: tabular-nums; text-shadow: 0 0 16px rgba(127, 217, 255, 0.4); }
-.m-col .cell .v.g { color: var(--alm-gold); text-shadow: 0 0 14px var(--alm-gold-glow); }
-.m-col .cell .v.m { color: var(--alm-mag); text-shadow: 0 0 14px var(--alm-mag-glow); }
-.m-col .cell .v.dual { font-size: 15px; }
-.m-col .cell .u { font-size: 8px; color: var(--alm-dim); letter-spacing: 0.26em; }
-.m-col .rule { height: 1px; background: linear-gradient(90deg, rgba(127, 217, 255, 0.4), transparent); }
-.m-nav { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 6px;
-  border-top: 1px solid var(--alm-line); font-size: 10px; letter-spacing: 0.2em; color: var(--alm-cyan); }
-.m-nav span { cursor: pointer; }
-.m-live { color: var(--alm-mag); text-shadow: 0 0 10px var(--alm-mag); }
-.m-snap { color: var(--alm-gold); }
-.m-home { text-align: center; padding: 12px; font-size: 9px; letter-spacing: 0.26em; color: var(--alm-dim); cursor: pointer; }

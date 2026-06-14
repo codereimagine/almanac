@@ -24,10 +24,11 @@ export interface HoloMark {
   color?: string;
 }
 
-/** When true, every HoloCanvas underneath sizes to its parent box instead of the window.
- *  The mobile shell provides `true`; desktop has no provider, so it stays full-window
- *  (the contract path, byte-identical). Pages render <HoloCanvas> unaware of either mode. */
-export const HoloFitContext = createContext(false);
+/** The active instrument's signature color. When set, the data pips (the ACTIVITY) are drawn
+ *  in this color so they MATCH that instrument's flashing dot in the catalog — swiping shows
+ *  the dot's color and the globe's activity in the same color. The globe itself stays contract
+ *  cyan (no tint); only the pips recolor. No provider => null => each pip keeps its own color. */
+export const HoloAccentContext = createContext<string | null>(null);
 
 /** Rotation lives at module scope so the Earth keeps turning across remounts —
  *  the index swaps the focused instrument's canvas without the globe snapping back. */
@@ -85,17 +86,13 @@ export interface HoloCanvasProps {
   spin?: number;
   /** per-frame instrument layer, drawn over the pips in globe space (wind flow, currents…) */
   overlay?: (X: CanvasRenderingContext2D, proj: HoloProject, tMs: number) => void;
-  /** Size to the parent element's box instead of the window. Used ONLY by the mobile
-   *  shell so the globe is fully visible in its own framed box; desktop omits this and
-   *  keeps the exact full-window path (byte-identical). */
-  containerFit?: boolean;
 }
 
-export function HoloCanvas({ pips = [], marks = [], spin = 0.05, overlay, containerFit = false }: HoloCanvasProps) {
+export function HoloCanvas({ pips = [], marks = [], spin = 0.05, overlay }: HoloCanvasProps) {
   const ref = useRef<HTMLCanvasElement>(null);
-  const useContainer = containerFit || useContext(HoloFitContext);
-  const propsRef = useRef({ pips, marks, overlay });
-  propsRef.current = { pips, marks, overlay };
+  const accent = useContext(HoloAccentContext);
+  const propsRef = useRef({ pips, marks, overlay, accent });
+  propsRef.current = { pips, marks, overlay, accent };
 
   useEffect(() => {
     const c = ref.current!;
@@ -106,24 +103,14 @@ export function HoloCanvas({ pips = [], marks = [], spin = 0.05, overlay, contai
       pipA = 0, // pip bloom: eases 0 → 1 on mount (contract: hover a row, the Earth answers)
       alive = true;
     const fit = () => {
-      // window path (desktop, default) is unchanged; container path sizes to the parent box
-      const p = c.parentElement;
-      const cw = useContainer && p ? p.clientWidth : innerWidth;
-      const ch = useContainer && p ? p.clientHeight : innerHeight;
-      W = c.width = cw * 2;
-      H = c.height = ch * 2;
+      W = c.width = innerWidth * 2;
+      H = c.height = innerHeight * 2;
       R = Math.min(W, H) * 0.3;
-      c.style.width = cw + "px";
-      c.style.height = ch + "px";
+      c.style.width = innerWidth + "px";
+      c.style.height = innerHeight + "px";
     };
     fit();
-    let ro: ResizeObserver | null = null;
-    if (useContainer && c.parentElement) {
-      ro = new ResizeObserver(fit);
-      ro.observe(c.parentElement);
-    } else {
-      window.addEventListener("resize", fit);
-    }
+    window.addEventListener("resize", fit);
     // click the planet: pointer pair with drag rejection, then unproject
     const down = { x: 0, y: 0, t: 0 };
     const onDown = (e: PointerEvent) => {
@@ -302,12 +289,14 @@ export function HoloCanvas({ pips = [], marks = [], spin = 0.05, overlay, contai
       X.stroke();
       // data pips (the only thing on the planet) — bloom in via pipA easing
       pipA += (1 - pipA) * 0.06;
+      const pipAccent = propsRef.current.accent; // the activity matches the instrument's dot
       for (const q of propsRef.current.pips) {
         const pp = proj(q.lon, q.lat);
         if (!pp) continue;
         const s = (3 + q.size * 1.8) * (1 + 0.25 * Math.sin(t / 280 + q.lon)) * pipA;
-        X.fillStyle = q.color;
-        X.shadowColor = q.color;
+        const pc = pipAccent ?? q.color;
+        X.fillStyle = pc;
+        X.shadowColor = pc;
         X.shadowBlur = 16;
         X.globalAlpha = pipA;
         X.beginPath();
@@ -337,13 +326,12 @@ export function HoloCanvas({ pips = [], marks = [], spin = 0.05, overlay, contai
     draw();
     return () => {
       alive = false;
-      if (ro) ro.disconnect();
-      else window.removeEventListener("resize", fit);
+      window.removeEventListener("resize", fit);
       c.removeEventListener("pointerdown", onDown);
       c.removeEventListener("pointerup", onUp);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spin, useContainer]);
+  }, [spin]);
 
   return <canvas ref={ref} style={{ position: "absolute", inset: 0 }} />;
 }
