@@ -87,6 +87,55 @@ const WMO: Record<number, string> = {
 };
 const wmoWord = (c: number): string => WMO[c] ?? `WMO ${c}`;
 
+// ── MET.no fallback (keyless, global) — used for the single-point probe when open-meteo
+//    is unavailable/rate-limited. A different provider & per-IP limit, no key, CORS-enabled.
+const METNO = "https://api.met.no/weatherapi/locationforecast/2.0/compact";
+
+/** MET.no symbol_code (e.g. "partlycloudy_day") → HUD condition word. */
+function metnoWord(sym: string): string {
+  const base = sym.replace(/_(day|night|polartwilight)$/, "");
+  const M: Record<string, string> = {
+    clearsky: "CLEAR", fair: "MOSTLY CLEAR", partlycloudy: "PARTLY CLOUDY", cloudy: "OVERCAST", fog: "FOG",
+    lightrain: "LIGHT RAIN", rain: "RAIN", heavyrain: "HEAVY RAIN",
+    lightrainshowers: "LIGHT SHOWERS", rainshowers: "SHOWERS", heavyrainshowers: "HEAVY SHOWERS",
+    drizzle: "DRIZZLE", lightdrizzle: "DRIZZLE",
+    lightsleet: "SLEET", sleet: "SLEET", heavysleet: "HEAVY SLEET", sleetshowers: "SLEET",
+    lightsnow: "LIGHT SNOW", snow: "SNOW", heavysnow: "HEAVY SNOW",
+    lightsnowshowers: "SNOW SHOWERS", snowshowers: "SNOW SHOWERS",
+    rainandthunder: "THUNDERSTORM", heavyrainandthunder: "THUNDERSTORM", rainshowersandthunder: "THUNDERSTORM",
+    snowandthunder: "THUNDERSTORM", sleetandthunder: "THUNDERSTORM",
+  };
+  return M[base] ?? (base ? base.replace(/_/g, " ").toUpperCase() : "MET.NO");
+}
+
+interface PointWx { temp: number; rh: number | null; precip: number; windKmh: number; word: string; }
+
+/** Single-point forecast from MET.no — the live fallback when open-meteo fails. null on failure. */
+async function metnoPoint(lat: number, lon: number): Promise<PointWx | null> {
+  const r = await fetch(`${METNO}?lat=${lat.toFixed(3)}&lon=${lon.toFixed(3)}`);
+  if (!r.ok) return null;
+  const j = (await r.json()) as {
+    properties?: {
+      timeseries?: {
+        data?: {
+          instant?: { details?: Record<string, number> };
+          next_1_hours?: { summary?: { symbol_code?: string }; details?: { precipitation_amount?: number } };
+        };
+      }[];
+    };
+  };
+  const ts = j.properties?.timeseries?.[0]?.data;
+  const det = ts?.instant?.details;
+  if (!det || det.air_temperature == null) return null;
+  return {
+    temp: det.air_temperature,
+    rh: det.relative_humidity ?? null,
+    precip: ts?.next_1_hours?.details?.precipitation_amount ?? 0,
+    windKmh: (det.wind_speed ?? 0) * 3.6, // m/s -> km/h (open-meteo & our HUD speak km/h)
+    word: metnoWord(ts?.next_1_hours?.summary?.symbol_code ?? ""),
+  };
+}
+
 const D = Math.PI / 180;
 const STORM = new Set([95, 96, 99]);
 
@@ -267,6 +316,16 @@ const page: AlmanacPage<WxData> = {
         },
       ];
     } catch {
+      // open-meteo failed (often its per-IP rate limit) — try MET.no (keyless, global, a
+      // different provider/limit) for a LIVE point reading before degrading to the grid.
+      const m = await metnoPoint(p.lat, p.lon).catch(() => null);
+      if (m) {
+        return [
+          { k: "now", v: dual(m.temp), cls: m.temp >= 32 ? "m" : "g", u: `${m.word} · MET.NO` },
+          { k: "wind", v: windDual(m.windKmh), u: m.rh != null ? `RH ${m.rh.toFixed(0)}%` : undefined },
+        ];
+      }
+      // both live sources down — nearest bundled grid reading, honestly labelled
       let b: CityWx | null = null;
       let bd = Infinity;
       for (const c of d.cities) {
