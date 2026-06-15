@@ -1,0 +1,16 @@
+{
+  "name": "ALMANAC · Earth Systems",
+  "short_name": "Almanac",
+  "description": "A live research almanac of Earth systems on a holographic globe — weather, seismic, ocean, geothermal, sky, time, position and orbit.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#01030a",
+  "theme_color": "#01030a",
+  "categories": ["education", "science", "utilities"],
+  "icons": [
+    { "src": "icon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "any" },
+    { "src": "icon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "maskable" }
+  ]
+}
