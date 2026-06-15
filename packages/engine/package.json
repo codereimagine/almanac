@@ -1,6 +1,7 @@
 {
   "name": "@almanac/engine",
   "version": "0.1.0",
+  "license": "Apache-2.0",
   "description": "Almanac engine — instrument design system, page registry, chrome, canvas + feed seams. The platform seed: sites consume this; pages are plugins.",
   "type": "module",
   "main": "src/index.ts",

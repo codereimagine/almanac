@@ -14,3 +14,7 @@ export function angularDeg(lat1: number, lon1: number, lat2: number, lon2: numbe
 export function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   return angularDeg(lat1, lon1, lat2, lon2) * D * 6371;
 }
+
+/** Format a kilometre distance with BOTH units — "462 KM · 287 MI".
+ *  Not everyone reads metric or imperial, so every distance shows both. */
+export const kmMi = (km: number): string => `${km.toFixed(0)} KM · ${(km * 0.621371).toFixed(0)} MI`;

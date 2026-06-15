@@ -11,7 +11,7 @@ export type { GazetteerEntry } from "./chrome/Shell";
 export { Tape } from "./chrome/Tape";
 export { useFeed } from "./feeds/feed";
 export type { DataFeed, FeedState } from "./feeds/feed";
-export { angularDeg, haversineKm } from "./geo";
+export { angularDeg, haversineKm, kmMi } from "./geo";
 export { buildRegistry } from "./registry/registry";
 export type { Registry } from "./registry/registry";
 export { runProbe } from "./probes";

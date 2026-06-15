@@ -6,7 +6,7 @@
 // takes the right column. No empty placeholders, ever.
 
 import type { AlmanacPage, CanvasProps, DataFeed } from "@almanac/engine";
-import { haversineKm, HoloCanvas, useFeed, type HoloMark, type HoloPip } from "@almanac/engine";
+import { haversineKm, kmMi, HoloCanvas, useFeed, type HoloMark, type HoloPip } from "@almanac/engine";
 import * as A from "astronomy-engine";
 import { useEffect, useState } from "react";
 
@@ -205,12 +205,13 @@ const page: AlmanacPage<PosData> = {
   preview: Preview,
   // range to the universal sub-points (always), plus your own fix when granted
   probe: (p, d) => {
+    // both units joined, each number next to its unit — same format as every other instrument
     const cells = [
-      { k: "from subsolar", v: haversineKm(p.lat, p.lon, d.subsolar.lat, d.subsolar.lon).toFixed(0), cls: "g", u: "KM" },
-      { k: "from sublunar", v: haversineKm(p.lat, p.lon, d.sublunar.lat, d.sublunar.lon).toFixed(0), u: "KM" },
+      { k: "from subsolar", v: kmMi(haversineKm(p.lat, p.lon, d.subsolar.lat, d.subsolar.lon)), cls: "g" },
+      { k: "from sublunar", v: kmMi(haversineKm(p.lat, p.lon, d.sublunar.lat, d.sublunar.lon)) },
     ];
     if (d.fix) {
-      cells.push({ k: "from your fix", v: haversineKm(p.lat, p.lon, d.fix.lat, d.fix.lon).toFixed(0), cls: "m", u: "KM" });
+      cells.push({ k: "from your fix", v: kmMi(haversineKm(p.lat, p.lon, d.fix.lat, d.fix.lon)), cls: "m" });
     }
     return cells;
   },

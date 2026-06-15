@@ -4,7 +4,7 @@
 // amber, WATCH/WARNING in magenta. Bezel diamonds mark the elevated vents.
 
 import type { AlmanacPage, CanvasProps, DataFeed } from "@almanac/engine";
-import { haversineKm, HoloCanvas, useFeed, type HoloMark, type HoloPip } from "@almanac/engine";
+import { haversineKm, kmMi, HoloCanvas, useFeed, type HoloMark, type HoloPip } from "@almanac/engine";
 import { useEffect, useState } from "react";
 import coordsTable from "./gvp-coords.json";
 import snapshot from "./snapshot.json";
@@ -180,9 +180,9 @@ const page: AlmanacPage<GeoData> = {
         k: "nearest monitored",
         v: bm ? bm.alert : "—",
         cls: bm && sev(bm.alert) >= 2 ? "m" : "g",
-        u: bm ? `${bm.name.toUpperCase().slice(0, 14)} · ${bmd.toFixed(0)} KM` : "",
+        u: bm ? `${bm.name.toUpperCase().slice(0, 14)} · ${kmMi(bmd)}` : "",
       },
-      { k: "nearest vent", v: Number.isFinite(bvd) ? bvd.toFixed(0) : "—", u: "KM" },
+      { k: "nearest vent", v: Number.isFinite(bvd) ? kmMi(bvd) : "—", u: "" },
     ];
   },
 };

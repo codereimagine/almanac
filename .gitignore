@@ -3,3 +3,19 @@ node_modules/
 dist/
 *.local
 *.tsbuildinfo
+
+# python gate caches
+__pycache__/
+*.py[cod]
+
+# tests stay local — not pushed
+gates/
+
+# env + editor (trio parity)
+.env
+.env.*
+!.env.example
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+*.log

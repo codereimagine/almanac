@@ -5,7 +5,7 @@
 // three flagship longitudes.
 
 import type { AlmanacPage, CanvasProps, DataFeed } from "@almanac/engine";
-import { haversineKm, HoloCanvas, useFeed, type HoloMark, type HoloPip } from "@almanac/engine";
+import { haversineKm, kmMi, HoloCanvas, useFeed, type HoloMark, type HoloPip } from "@almanac/engine";
 import { useEffect, useState } from "react";
 import snapshot from "./snapshot.json";
 
@@ -212,9 +212,9 @@ const page: AlmanacPage<OceanData> = {
         k: "nearest flagship",
         v: bf ? bf.level.toFixed(2) : "—",
         cls: "g",
-        u: bf ? `M MLLW · ${bf.name.toUpperCase().slice(0, 14)} · ${bfd.toFixed(0)} KM` : "",
+        u: bf ? `M MLLW · ${bf.name.toUpperCase().slice(0, 14)} · ${kmMi(bfd)}` : "",
       },
-      { k: "nearest station", v: Number.isFinite(bsd) ? bsd.toFixed(0) : "—", u: "KM" },
+      { k: "nearest station", v: Number.isFinite(bsd) ? kmMi(bsd) : "—", u: "" },
     ];
   },
 };

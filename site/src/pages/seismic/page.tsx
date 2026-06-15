@@ -4,7 +4,7 @@
 // exactly the mockup's pips, but real. Bezel diamonds mark the 3 largest.
 
 import type { AlmanacPage, CanvasProps, DataFeed } from "@almanac/engine";
-import { haversineKm, HoloCanvas, useFeed, type HoloMark, type HoloPip } from "@almanac/engine";
+import { haversineKm, kmMi, HoloCanvas, useFeed, type HoloMark, type HoloPip } from "@almanac/engine";
 import { useEffect, useState } from "react";
 import snapshot from "./snapshot.json";
 
@@ -171,7 +171,7 @@ const page: AlmanacPage<QuakeData> = {
         k: "nearest quake 24h",
         v: best ? `M ${best.mag.toFixed(1)}` : "—",
         cls: "m",
-        u: best ? `${bd.toFixed(0)} KM AWAY` : "",
+        u: best ? `${kmMi(bd)} AWAY` : "",
       },
       { k: "within 1000 km", v: String(within), cls: "g" },
     ];
