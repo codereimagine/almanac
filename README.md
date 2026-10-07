@@ -55,6 +55,10 @@ npm run build      # type-check + production build → site/dist
 npm run preview    # serve the build
 ```
 
+## Credits
+
+Built with [Claude Code](https://claude.com/claude-code).
+
 ## License
 
 [Apache-2.0](LICENSE).
