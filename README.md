@@ -62,7 +62,7 @@ npm run preview    # preview the production build
 - **Data** (keyless, fetched only for the instrument you open): weather — Open-Meteo + MET.no; earthquakes & volcanoes — USGS + Smithsonian GVP; tides & water level — NOAA CO-OPS.
 - **City search:** [Open-Meteo geocoding](https://open-meteo.com/en/docs/geocoding-api), keyless — only when you type a country or city.
 - **Always-live, offline:** the sky, time, position and orbit instruments are computed on-device with `astronomy-engine` — live even with no network. Geolocation (the position instrument) is used only on-device, never sent.
-- **Stack:** React 19 · TypeScript · Vite · three.js / react-three-fiber · `astronomy-engine` · a hand-written service worker (`public/sw.js`).
+- **Stack:** React 19 · TypeScript · Vite · three.js / react-three-fiber · `astronomy-engine` · a hand-written service worker (`site/public/sw.js`).
 
 </details>
 
