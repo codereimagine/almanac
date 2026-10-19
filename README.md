@@ -4,6 +4,8 @@
 
 ### A living globe of Earth's systems — see what the planet is doing right now.
 
+$\textcolor{#7fd9ff}{\textsf{earth}}$ · $\textcolor{#ff2bd6}{\textsf{systems}}$ · $\textcolor{#ffb45e}{\textsf{live}}$
+
 *No accounts, no sign-up, no ads — and your exact location never leaves your device.*
 
 **▶ Open it — [codereimagine.github.io/almanac](https://codereimagine.github.io/almanac/)**
@@ -22,13 +24,13 @@
 
 ## 🛰️ What is it?
 
-almanac is a living globe of Earth's systems. Spin it, pick an instrument, or search any country or city, and it shows you what's happening there **right now** — earthquakes, ocean tides, weather, the sky overhead. Nine instruments, each reading real public data, and every one has an **honest offline fallback**, so it never fakes a number.
+almanac is a living globe of Earth's systems. Spin it, pick an instrument, or search any country or city, and it shows you what's happening there $\textcolor{#ffb45e}{\textsf{right now}}$ — earthquakes, ocean tides, weather, the sky overhead. Nine instruments, each reading real public data, and every one has an $\textcolor{#7fd9ff}{\textsf{honest offline fallback}}$, so it never fakes a number.
 
 No app store, no account, nothing to sign up for. Open the link and it works. Like it? Add it to your home screen like any other app.
 
 ## ✨ How we do things differently
 
-Most apps want your account, your data, and your attention. Every codereimagine app is built the other way round:
+Most apps want your account, your data, and your attention. Every codereimagine app is built $\textcolor{#ff2bd6}{\textsf{the other way round}}$:
 
 - **Private by default** — no accounts, no tracking, nothing sold. Your exact location stays on *your* device.
 - **No ads, no clutter** — nothing on the screen is trying to sell you something.
@@ -66,7 +68,7 @@ npm run preview    # preview the production build
 
 ## 🙌 Credits & thanks
 
-Built with [Claude Code](https://claude.com/claude-code). Nothing here is hidden — almanac stands on:
+Built with [Claude Code](https://claude.com/claude-code). $\textcolor{#7fd9ff}{\textsf{Nothing here is hidden}}$ — almanac stands on:
 
 - **Data** — [Open-Meteo](https://open-meteo.com) (CC BY 4.0) · [MET Norway](https://www.met.no/en) · USGS · NOAA CO-OPS · Smithsonian Global Volcanism Program.
 - **Astronomy** — [`astronomy-engine`](https://github.com/cosinekitty/astronomy) (MIT) by Don Cross.
