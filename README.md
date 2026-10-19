@@ -58,7 +58,7 @@ npm run preview    # preview the production build
 <details><summary><b>🔧 Under the hood</b></summary>
 
 - **Globe:** a hand-built Canvas 2D renderer (`HoloCanvas`) — a 1:1 port of the design mockup, redrawn every frame as the Earth turns.
-- **Design study — the glow:** the coastlines' double-pass bloom is the globe's signature, and it's deliberate. Lighter variants were tried and left out because they changed the look.
+- **Design study.**
 - **Instruments:** a monorepo design system (`@almanac/engine`) — each instrument is a plugin folder under `site/src/pages`, checked against a real-browser gate battery (its live path *and* its offline path, kept local) before it ships.
 - **Data** (keyless, fetched only for the instrument you open): weather — Open-Meteo + MET.no; earthquakes & volcanoes — USGS + Smithsonian GVP; tides & water level — NOAA CO-OPS.
 - **City search:** [Open-Meteo geocoding](https://open-meteo.com/en/docs/geocoding-api), keyless — only when you type a country or city.
