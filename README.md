@@ -45,6 +45,14 @@ Most apps want your account, your data, and your attention. Every codereimagine 
 - **Trust what you see** — every instrument is live or clearly labelled offline; it never pretends.
 - **Anywhere** — fast on phones and computers.
 
+## 🧭 How to use it
+
+1. **Open it** — tap [codereimagine.github.io/almanac](https://codereimagine.github.io/almanac/) on a phone or computer. No install, no account.
+2. **Pick an instrument** — the catalog lists nine (seismic, ocean, weather, sky…). On a computer, hover a row to preview it on the globe and click to open it; on a phone, swipe the strip at the bottom and tap.
+3. **Go anywhere** — tap **SEARCH · COUNTRY OR CITY** at the top and type a place, or tap a spot on the globe to read it.
+4. **Read it live** — every instrument shows live data, or says clearly when it's showing an offline snapshot.
+5. **Keep it** — add it to your home screen; the sky, time, position and orbit instruments keep working offline.
+
 ## 🛠️ Run or build it yourself (developers)
 
 ```bash
