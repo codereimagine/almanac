@@ -10,10 +10,8 @@
     "./tokens.css": "./src/tokens/instrument.css"
   },
   "peerDependencies": {
-    "@react-three/fiber": "^9.0.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "three": "^0.170.0"
+    "react-dom": "^19.0.0"
   },
   "dependencies": {
     "topojson-client": "^3.1.0",
