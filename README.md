@@ -14,7 +14,7 @@ $\textcolor{#7fd9ff}{\textsf{earth}}$ · $\textcolor{#ff2bd6}{\textsf{systems}}$
   <img src="docs/screenshots/almanac-desktop.png" width="90%" alt="almanac — a cinematic globe with the Earth-systems instrument catalog and live seismic data" />
 </p>
 
-<sub>Nine instruments — <b>seismic · ocean · geothermal · weather · sky · time · position · orbit</b> — each with a live feed and an honest offline fallback.</sub>
+<sub>Nine instruments — <b>calibration · seismic · ocean · geothermal · weather · sky · time · position · orbit</b> — each with a live feed and an honest offline fallback.</sub>
 
 <sub>By <b>Bert Peters</b> · <a href="https://github.com/codereimagine">codereimagine</a></sub>
 
@@ -62,7 +62,7 @@ npm run preview    # preview the production build
 - **Data** (keyless, fetched only for the instrument you open): weather — Open-Meteo + MET.no; earthquakes & volcanoes — USGS + Smithsonian GVP; tides & water level — NOAA CO-OPS.
 - **City search:** [Open-Meteo geocoding](https://open-meteo.com/en/docs/geocoding-api), keyless — only when you type a country or city.
 - **Always-live, offline:** the sky, time, position and orbit instruments are computed on-device with `astronomy-engine` — live even with no network. Geolocation (the position instrument) is used only on-device, never sent.
-- **Stack:** React 19 · TypeScript · Vite · three.js / react-three-fiber · `astronomy-engine` · `vite-plugin-pwa`.
+- **Stack:** React 19 · TypeScript · Vite · three.js / react-three-fiber · `astronomy-engine` · a hand-written service worker (`public/sw.js`).
 
 </details>
 
