@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "npm --workspace site run dev",
     "build": "npm --workspace site run build",
-    "preview": "npm --workspace site run preview"
+    "preview": "npm --workspace site run preview",
+    "test": "npm --workspace site run test"
   }
 }
